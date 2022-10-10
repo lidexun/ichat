@@ -84,3 +84,21 @@ export const register = async (req, res, next) => {
     next(ex)
   }
 }
+export const search = async (req, res, next) => {
+  try {
+    const { username } = req.query
+    const list = await User.find({ username: { $regex: username } }).select([
+      'email',
+      'username',
+      'avatarImage',
+      '_id'
+    ])
+    return res.json({
+      data: {
+        list
+      }
+    })
+  } catch (ex) {
+    next(ex)
+  }
+}

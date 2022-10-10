@@ -19,11 +19,11 @@ const userSchema = new Schema({
     min: 8,
     set: (val) => bcrypt.hashSync(val, 10)
   },
-  isAvatarImageSet: {
+  isAvatarSet: {
     type: Boolean,
     default: false
   },
-  avatarImage: {
+  avatar: {
     type: String,
     default: ''
   },
