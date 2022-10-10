@@ -1,7 +1,11 @@
-# Vue 3 + Vite
+## 功能介绍
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+- 仿 QQ、VX 的聊天社交 app
 
-## Recommended IDE Setup
+## 技术栈
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+前端：`Vue3`+`Vant`
+
+后端：`Nodejs(express)`+`mongoDB`
+
+通信：`Websocket(socket.io)`
