@@ -7,3 +7,7 @@ export function login(params) {
 export function register(params) {
   return http.post('/register', params)
 }
+
+export function search(params) {
+  return http.get('/search', { params })
+}
