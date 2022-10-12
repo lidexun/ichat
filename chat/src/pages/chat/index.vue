@@ -2,20 +2,34 @@
 import { useRoute, useRouter } from 'vue-router'
 import emitter from '../../utils/bus.js'
 import storage from '../../utils/storage.js'
+import { message } from '../../api/user.js'
 
 const router = useRouter()
 const userInfo = storage.getItem('userInfo')
 const route = useRoute()
-const message = ref('')
+const content = ref('')
 function onClickLeft() {
   router.back()
 }
 function sendMessage() {
-  emitter.emit('send_message', {
-    message: message.value,
-    toid: route.query._id,
-    fromid: userInfo._id
+  if (!content.value) return
+  const params = {
+    content_type: 1,
+    content: content.value,
+    to_uid: route.query._id,
+    from_uid: userInfo._id
+  }
+  console.log(params)
+  message(params).then((res) => {
+    console.log(res)
+    content.value = ''
   })
+  // emitter.emit('send_message', {
+  //   content_type: 1,
+  //   content: content.value,
+  //   to_uid: route.query._id,
+  //   from_uid: userInfo._id
+  // })
 }
 </script>
 <template>
@@ -32,7 +46,7 @@ function sendMessage() {
     <footer class="footer">
       <van-cell-group inset>
         <van-field
-          v-model="message"
+          v-model="content"
           center
           clearable
           label="文本"

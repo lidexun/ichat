@@ -1,11 +1,15 @@
 <script setup>
 import { openUserChat } from '../../../utils/user.js'
+import { getMessage } from '../../../api/user.js'
+
 import router from '../../../router'
 const messageList = ref([])
-
-onUnmounted(() => {
-  socket.close()
+getMessage().then((res) => {
+  console.log(res)
 })
+// onUnmounted(() => {
+//   socket.close()
+// })
 </script>
 <template>
   <van-nav-bar
