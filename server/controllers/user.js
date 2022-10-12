@@ -1,5 +1,7 @@
-import User from '../models/userModel.js'
+import User from '../models/user.js'
+import Message from '../models/message.js'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 import { generateToken } from '../utils/token.js'
 // 登陆
 export const login = async (req, res, next) => {
@@ -65,7 +67,6 @@ export const register = async (req, res, next) => {
       })
     }
     const emailCheck = await User.findOne({ email })
-    console.log(emailCheck)
     if (emailCheck) {
       return res.json({ message: '邮箱已使用' })
     }
@@ -79,7 +80,14 @@ export const register = async (req, res, next) => {
       email,
       createTime: new Date()
     })
-    return res.json({ status: 200, data: {}, message: '注册成功' })
+    const token = generateToken(user._id.toHexString())
+    const data = {
+      token,
+      ...Object.assign(user._doc),
+      __v: undefined,
+      password: undefined
+    }
+    return res.json({ status: 200, data, message: '注册成功' })
   } catch (ex) {
     next(ex)
   }
@@ -98,6 +106,66 @@ export const search = async (req, res, next) => {
         list
       }
     })
+  } catch (ex) {
+    next(ex)
+  }
+}
+export const message = async (req, res, next) => {
+  try {
+    const { from_uid, to_uid, content_type, content } = req.body
+    const data = await Message.create({
+      from_uid,
+      to_uid,
+      content_type,
+      content
+    })
+    return res.json({ status: 200, data: {}, message: '' })
+  } catch (ex) {
+    next(ex)
+  }
+}
+export const messageHistory = async (req, res, next) => {
+  try {
+    console.log(req.headers['token'])
+    // const { from_uid, to_uid, content_type, content } = req.body
+    // const data = await Message.find({
+    //   from_uid,
+    //   to_uid,
+    //   content_type,
+    //   content
+    // })
+    const { uid } = await jwt.verify(req.headers.token, 'ldx96')
+    let data = await Message.find({
+      $or: [
+        {
+          from_uid: uid
+        },
+        {
+          to_uid: uid
+        }
+      ]
+    }).sort({ createdTime: -1 })
+    console.log(data)
+    // const data = await query.exec()
+
+    // const data = await Message.find({
+    //   $or: [
+    //     {
+    //       from_uid: uid
+    //     },
+    //     {
+    //       to_uid: uid
+    //     }
+    //   ]
+    // })
+    // console.log(
+    //   data.sort({
+    //     createdTime: -1
+    //   })
+    // )
+    // console.log(jwtVerify)
+    console.log(data)
+    return res.json({ status: 200, data: {}, message: '' })
   } catch (ex) {
     next(ex)
   }
