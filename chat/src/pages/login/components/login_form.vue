@@ -15,6 +15,9 @@ function buttonClick() {
   emit('submit', {
     type: props.type,
     ...form
+    // email: form.email,
+    // username: form.username,
+    // password: form.password
   })
 }
 </script>
@@ -67,7 +70,7 @@ function buttonClick() {
 
 <style scoped lang="less">
 .login {
-  padding: 80px 28px 0;
+  padding: 0 28px 0;
   // .login_input {
   //   margin-top: 16px;
   //   position: relative;
@@ -79,20 +82,19 @@ function buttonClick() {
     display: block;
     width: 100%;
     border: 2px solid rgba(240, 240, 240, 1);
-    height: 55px;
+    height: 44px;
     padding: 0 14px;
     background: rgba(240, 240, 240, 1);
     border-radius: 18px;
     z-index: 1;
-    font-size: 16px;
+    font-size: 14px;
     transition: 0.3s cubic-bezier(0.1, 0.2, 0.3, 1);
     &:focus {
       border-color: var(--van-blue);
     }
   }
   .login_button {
-    height: 48px;
-    font-size: 18px;
+    font-size: 16px;
   }
 }
 </style>
