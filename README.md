@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/lidexun/iChat/blob/master/chat/public/icon.svg">
+  <img width="148" src="https://lidexun.github.io/ichat/icon.svg">
 </p>
 
 ### ichat(一对一聊天/前后端分离)
