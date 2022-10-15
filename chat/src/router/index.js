@@ -8,13 +8,13 @@ const router = createRouter({
   routes
 })
 router.beforeEach((to, from, next) => {
-  window.document.title = `聊天室`
+  window.document.title = `iChat聊天室`
   if (to.path === '/login') return next()
   const token = storage.getItem('token')
   if (!token) {
     next('/login')
+    return
   }
   next()
-  // 返回 false 以取消导航
 })
 export default router
