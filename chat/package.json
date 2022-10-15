@@ -1,5 +1,5 @@
 {
-  "name": "socket-app",
+  "name": "ichat",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dicebear/avatars": "^4.10.5",
+    "@dicebear/avatars-initials-sprites": "^4.10.5",
     "ant-design-vue": "^3.2.12",
     "axios": "^0.27.2",
     "mitt": "^3.0.0",
