@@ -1,0 +1,1 @@
+import{j as u,t as n,v as i,a9 as r,aa as h,y as c}from"./index.fc0e2afd.js";const l=(o,s)=>{const e=u(),t=()=>{e.value=h(o).height};return n(()=>{if(i(t),s)for(let a=1;a<=3;a++)setTimeout(t,100*a)}),r(()=>i(t)),e};function d(o,s){const e=l(o,!0);return t=>c("div",{class:s("placeholder"),style:{height:e.value?`${e.value}px`:void 0}},[t()])}export{d as u};
