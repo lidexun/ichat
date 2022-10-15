@@ -3,7 +3,7 @@ export default {
     let storage = this.getStroage()
     storage[key] = val
     window.localStorage.setItem(
-      import.meta.env.namespace,
+      import.meta.env.VITE_PK_NAME,
       JSON.stringify(storage)
     )
   },
@@ -12,14 +12,14 @@ export default {
   },
   getStroage() {
     return JSON.parse(
-      window.localStorage.getItem(import.meta.env.namespace) || '{}'
+      window.localStorage.getItem(import.meta.env.VITE_PK_NAME) || '{}'
     )
   },
   clearItem(key) {
     let storage = this.getStroage()
     delete storage[key]
     window.localStorage.setItem(
-      import.meta.env.namespace,
+      import.meta.env.VITE_PK_NAME,
       JSON.stringify(storage)
     )
   },
