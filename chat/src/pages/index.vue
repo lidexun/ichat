@@ -13,20 +13,15 @@ import emitter from '../utils/bus.js'
 import storage from '../utils/storage.js'
 const userInfo = storage.getItem('userInfo')
 
-const socket = io('ws://localhost:6001', {
+const socket = io(import.meta.env.VITE_WS_URL, {
   auth: {
     username: userInfo.username,
     id: userInfo._id,
     token: userInfo.token
   }
 })
-emitter.on('send_message', (data) => {
-  console.log(data)
-  socket.emit('message', data.message, data.fromid, data.toid)
-})
-socket.on('message', (data, fromid, type) => {
-  console.log(data, type)
-  // messageList.value.push(ags)
+socket.on('message', (data) => {
+  emitter.emit('message', data)
 })
 onUnmounted(() => {
   socket.close()
