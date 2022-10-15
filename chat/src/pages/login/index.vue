@@ -40,7 +40,7 @@ const submit = async (data) => {
     :border="false"
   />
   <div class="login_logo">
-    <van-image class="logo" width="58" height="58" src="../../icon.svg" />
+    <van-image class="logo" width="58" height="58" src="icon.svg" />
     <div>iChat 一款聊天应用</div>
   </div>
   <loginForm

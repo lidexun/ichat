@@ -5,6 +5,7 @@ import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from 'unplugin-vue-components/resolvers'
 import AutoImport from 'unplugin-auto-import/vite'
 const config = {
+  base: '/ichat/',
   plugins: [
     vue(),
     Components({
