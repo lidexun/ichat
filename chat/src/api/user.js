@@ -13,8 +13,11 @@ export function search(params) {
 }
 
 export function message(params) {
-  return http.post('/message', params)
+  return http.post('/user/message', params)
 }
 export function getMessage(params) {
-  return http.get('/message')
+  return http.get('/user/message')
+}
+export function setReadMessage(uid) {
+  return http.put('/user/message/set_read/' + uid)
 }

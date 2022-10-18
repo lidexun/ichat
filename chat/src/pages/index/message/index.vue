@@ -1,105 +1,103 @@
 <script setup>
-import { openUserChat } from '../../../utils/user.js'
-import { getMessage } from '../../../api/user.js'
-import storage from '../../../utils/storage.js'
-import emitter from '../../../utils/bus.js'
+import { openUserChat } from '@/utils/user.js'
+import { getMessage, setReadMessage } from '@/api/user.js'
+import { transferData } from '@/utils/message.js'
+import { useMessageStore } from '@/store/index.js'
+import storage from '@/utils/storage.js'
+import emitter from '@/utils/bus.js'
+import router from '@/router'
 
-import router from '../../../router'
-let state = reactive({
-  messageList: []
-})
 const uid = storage.getItem('userInfo')._id
-const map = new Map()
-function dateFormat(t) {
-  var nowDate = new Date()
-  if (t) {
-    // t = t * 1000
-    nowDate = new Date(t)
-  }
-  var year = nowDate.getFullYear()
-  var month =
-    nowDate.getMonth() + 1 < 10
-      ? '0' + (nowDate.getMonth() + 1)
-      : nowDate.getMonth() + 1
-  var date =
-    nowDate.getDate() < 10 ? '0' + nowDate.getDate() : nowDate.getDate()
-  var hour =
-    nowDate.getHours() < 10 ? '0' + nowDate.getHours() : nowDate.getHours()
-  var minute =
-    nowDate.getMinutes() < 10
-      ? '0' + nowDate.getMinutes()
-      : nowDate.getMinutes()
-  var second =
-    nowDate.getSeconds() < 10
-      ? '0' + nowDate.getSeconds()
-      : nowDate.getSeconds()
-  return year + '-' + month + '-' + date + ' ' + hour + ':' + minute
-}
+const store = useMessageStore()
+let state = reactive({
+  list: []
+})
+let messageList = new Map()
+let messageCount = new Map()
 getMessage().then((res) => {
   const { data } = res
-  const users = []
   for (let index = 0; index < data.length; index++) {
     const item = data[index]
+    // 总一下未读消息
+    if (item.from_uid !== uid && Number.parseInt(item.is_read) === 0) {
+      const temp = messageCount.get(item.from_uid)
+      if (messageCount.get(item.from_uid)) {
+        messageCount.set(item.from_uid, temp + 1)
+      } else {
+        messageCount.set(item.from_uid, 1)
+      }
+    }
     const key = item.from_uid === uid ? item.to_uid : item.from_uid
-    let temp = map.get(key)
+    let temp = messageList.get(key)
     if (temp) {
-      map.set(key, [...temp, item])
+      messageList.set(key, [...temp, item])
     } else {
-      users.push(key)
-      map.set(key, [item])
+      messageList.set(key, [item])
     }
   }
-  storage.setItem('messageList', Object.fromEntries(map))
-  map.forEach((item, key) => {
-    state.messageList.push(tranfData(item[0]))
+  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
+  messageList.forEach((item, key) => {
+    state.list.push({
+      ...transferData(item[0]),
+      count: messageCount.get(key)
+    })
   })
+  setMessageCount()
 })
-
-function tranfData(data) {
-  const tempData = data
-  tempData.content = tempData.content
-    .replace(/&amp;/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/<br\/>/g, ' ')
-  tempData.addtime = dateFormat(data.createdTime)
-  tempData.timestamp = Math.round(new Date(data.createdTime) / 1000)
-  return tempData
+function messageClick(data, index) {
+  messageCount.set(data.userinfo._id, 0)
+  state.list[index].count = 0
+  setMessageCount()
+  setReadMessage(data.userinfo._id)
+  openUserChat(data.userinfo._id)
 }
+function setMessageCount() {
+  let count = 0
+  messageCount.forEach((item, key) => {
+    count += item
+  })
+  store.setCount(count)
+}
+// 发送成功后更新列表
 emitter.on('send_message', (data) => {
   const key = data.to_uid
-  let temp = map.get(key)
+  let temp = messageList.get(key)
   if (temp) {
-    map.set(key, [...temp, data])
+    messageList.set(key, [...temp, data])
   } else {
-    map.set(key, [data])
+    messageList.set(key, [data])
   }
-  storage.setItem('messageList', Object.fromEntries(map))
-  const findIndex = state.messageList.findIndex((item) => {
-    return item.from_uid === key || item.to_uid === key
-  })
-  state.messageList[findIndex] = {
-    ...tranfData(data),
+  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
+  const findIndex = state.list.findIndex(
+    (item) => item.from_uid === key || item.to_uid === key
+  )
+  state.list[findIndex] = {
+    ...transferData(data),
     userinfo: data.userinfo
   }
 })
+// 接收后更新列表
 emitter.on('message', (data) => {
   const key = data.from_uid === uid ? data.to_uid : data.from_uid
-  let temp = map.get(key)
+  let temp = messageList.get(key)
+  let count = messageCount.get(key)
   if (temp) {
-    map.set(key, [...temp, data])
+    messageList.set(key, [...temp, data])
+    messageCount.set(key, count + 1)
   } else {
-    map.set(key, [data])
+    messageList.set(key, [data])
+    messageCount.set(key, 1)
   }
-  storage.setItem('messageList', Object.fromEntries(map))
-  state.messageList = state.messageList.map((item, index) => {
-    if (item.from_uid === data.from_uid) {
-      return {
-        ...tranfData(data),
-        userinfo: item.userinfo
-      }
-    }
-    return item
-  })
+  const findIndex = state.list.findIndex(
+    (item) => item.from_uid === key || item.to_uid === key
+  )
+  state.list[findIndex] = {
+    ...transferData(data),
+    count: messageCount.get(key),
+    userinfo: data.userinfo
+  }
+  setMessageCount()
+  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
 })
 </script>
 <template>
@@ -113,8 +111,8 @@ emitter.on('message', (data) => {
     <ul class="message_list">
       <li
         class="message_item"
-        v-for="(item, index) in state.messageList"
-        @click="openUserChat(item.userinfo._id)"
+        v-for="(item, index) in state.list"
+        @click="messageClick(item, index)"
         :style="{
           order: `-${item.timestamp}`
         }"
@@ -126,6 +124,12 @@ emitter.on('message', (data) => {
             {{ item.content }}
           </div>
           <div class="addtime" v-html="item.addtime"></div>
+          <van-badge
+            v-show="item.count > 0"
+            class="badge"
+            :content="item.count"
+          >
+          </van-badge>
         </div>
       </li>
     </ul>
@@ -147,6 +151,12 @@ emitter.on('message', (data) => {
         rgba(0, 0, 0, 0.05),
         rgba(0, 0, 0, 0.05)
       );
+    }
+    .badge {
+      position: absolute;
+      top: auto;
+      right: 16px;
+      bottom: 0;
     }
   }
   .message_item_box {
