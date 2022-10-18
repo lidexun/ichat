@@ -8,9 +8,10 @@ const router = createRouter({
   routes
 })
 router.beforeEach((to, from, next) => {
-  window.document.title = `iChat聊天室`
+  window.document.title = `iChat`
   if (to.path === '/login') return next()
-  const token = storage.getItem('token')
+  const userInfo = storage.getItem('userInfo') || {}
+  const token = userInfo.token
   if (!token) {
     next('/login')
     return

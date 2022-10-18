@@ -1,8 +1,10 @@
 <script setup>
-import { login, register } from '../../api/user.js'
+import { login, register } from '@/api/user.js'
 import loginForm from './components/login_form.vue'
-import router from '../../router/index.js'
-import storage from '../../utils/storage.js'
+import router from '@/router/index.js'
+import storage from '@/utils/storage.js'
+import { useUserInfoStore } from '@/store/index.js'
+
 import { Toast } from 'vant'
 const type = ref('login')
 const setType = (value) => {
@@ -17,23 +19,26 @@ const submit = async (data) => {
     message: '',
     forbidClick: true
   })
-  let res = null
-  if (data.type === 'register') {
-    res = await register(data)
-  } else {
-    res = await login(data)
-  }
-  storage.setItem('userInfo', res.data)
-  storage.setItem('token', res.data.token)
-  Toast.clear()
-  router.push('/')
+  try {
+    let res = null
+    if (data.type === 'register') {
+      res = await register(data)
+    } else {
+      res = await login(data)
+    }
+    const store = useUserInfoStore()
+    store.setUseInfo(res.data)
+    storage.setItem('userInfo', res.data)
+    router.push('/')
+    Toast.clear()
+  } catch {}
 }
 </script>
 
 <template>
   <van-nav-bar
     :left-arrow="type !== 'login'"
-    :title="type === 'login' ? '登录' : '注册'"
+    :title="type === 'login' ? '' : '注册'"
     :right-text="type === 'login' ? '注册' : ''"
     @click-left="setType('login')"
     @click-right="setType('register')"
