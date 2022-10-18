@@ -4,20 +4,16 @@ import {
   register,
   search,
   message,
-  messageHistory
+  messageHistory,
+  messageRead
 } from '../controllers/user.js'
 
 const router = Router()
 router.route('/login').post(login)
 router.route('/register').post(register)
 router.route('/search').get(search)
-router.route('/message').post(message)
-router.route('/message').get(messageHistory)
+router.route('/user/message').post(message)
+router.route('/user/message').get(messageHistory)
+router.route('/user/message/set_read/:from_uid').put(messageRead)
 
-// router.get('/', (req, res) => {
-//   res.send({ msg: 'GET/' })
-// })
-// router.get('/app/:id', (req, res) => {
-//   res.send({ msg: 'GET/' })
-// })
 export default router

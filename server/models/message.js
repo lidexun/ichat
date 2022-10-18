@@ -14,7 +14,8 @@ const messageSchema = new Schema({
   createdTime: {
     type: Date,
     default: Date.now
-  }
+  },
+  is_read: { type: String, default: 0 }
 })
 
 export default model('message', messageSchema)
