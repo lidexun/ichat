@@ -5,10 +5,16 @@ import morganBody from 'morgan-body'
 import router from './router/index.js'
 import mongoose from 'mongoose'
 import ws from './utils/socket.js'
-const app = express()
+const app = express({})
 dotenv.config()
+dotenv.config({
+  path: `.env.${process.env.NODE_ENV}`
+})
+
 // middleware
-// morganBody(app)
+if (process.env.NODE_ENV === 'development') {
+  // morganBody(app)
+}
 app.use(
   express.urlencoded({
     extended: false
