@@ -1,9 +1,7 @@
 import User from '../models/user.js'
 import Message from '../models/message.js'
-import { Server } from 'socket.io'
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
-import { generateToken } from '../utils/token.js'
+import { generateToken, verifyToken } from '../utils/token.js'
 // 登陆
 export const login = async (req, res, next) => {
   try {
@@ -118,7 +116,8 @@ export const message = async (req, res, next) => {
       from_uid,
       to_uid,
       content_type,
-      content
+      content,
+      is_read: 0
     })
     const userinfo = await User.find({
       _id: to_uid
@@ -142,9 +141,10 @@ export const message = async (req, res, next) => {
     next(ex)
   }
 }
+
 export const messageHistory = async (req, res, next) => {
   try {
-    const { uid } = await jwt.verify(req.headers.token, 'ldx96')
+    const { uid } = await verifyToken(req.headers.token)
     let data = await Message.find({
       $or: [
         {
@@ -186,6 +186,30 @@ export const messageHistory = async (req, res, next) => {
       return { ...item._doc, userinfo }
     })
     return res.json({ status: 200, data: tranfData, message: '' })
+  } catch (ex) {
+    next(ex)
+  }
+}
+export const messageRead = async (req, res, next) => {
+  try {
+    const { from_uid } = req.params
+    const { uid } = await verifyToken(req.headers.token)
+    let data = await Message.updateMany(
+      {
+        $or: [
+          {
+            from_uid,
+            to_uid: uid
+          }
+        ]
+      },
+      { $set: { is_read: 1 } }
+    )
+    return res.json({
+      status: 200,
+      data: {},
+      message: '已更新已读消息'
+    })
   } catch (ex) {
     next(ex)
   }
