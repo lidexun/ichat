@@ -14,6 +14,7 @@
     "ant-design-vue": "^3.2.12",
     "axios": "^0.27.2",
     "mitt": "^3.0.0",
+    "pinia": "^2.0.23",
     "socket.io-client": "^4.5.2",
     "vant": "^3.6.3",
     "vue": "^3.2.37",
