@@ -9,17 +9,26 @@ import router from '@/router'
 
 const uid = storage.getItem('userInfo')._id
 const store = useMessageStore()
-const storageMessageList = storage.getItem(uid + 'messageList') || {}
-let messageList = new Map()
+const storageMessageList = storage.getItem(uid + 'messageList')
+let messageList = storageMessageList
+  ? new Map(Object.entries(storageMessageList))
+  : new Map()
 let state = reactive({
   list: []
 })
 onMounted(() => {
-  // 先拿本地缓存数据
-  if (storageMessageList) {
-    handleMessageData(storageMessageList)
+  // 先拿本地缓存数据渲染
+  if (messageList.size !== 0) {
+    messageList.forEach((item) => {
+      state.list.push({
+        ...transferData(item.list[0]),
+        count: item.count,
+        userinfo: item.list[0].userinfo
+      })
+    })
+    setMessageCount()
   }
-  最后一条数据的记录时间
+  // 最后一条数据的记录时间
   const time = storage.getItem(uid + 'messageStartTime') || 0
   getMessage({ time }).then((res) => {
     const { data } = res
@@ -29,36 +38,45 @@ onMounted(() => {
     handleMessageData(data)
   })
 })
-function handleMessageData(data, keyVal) {
-  for (let index = 0; index < data.length; index++) {
-    const item = data[index]
+function handleMessageData(data, keyVal, type) {
+  data.forEach((item) => {
     const key = keyVal || item.from_uid === uid ? item.to_uid : item.from_uid
     const temp = messageList.get(key)
-    let count = !temp ? 0 : temp.count
+    let count = temp !== undefined && temp.count ? temp.count : 0
     if (item.from_uid !== uid && Number.parseInt(item.is_read) === 0) {
       count = count + 1
     }
+    let tempList = temp ? [item].concat(temp.list) : [item]
     messageList.set(key, {
-      list: temp ? [...temp.list, item] : [item],
+      list: tempList,
       count
     })
-  }
-  // Object.fromEntries
-  storage.setItem(
-    uid + 'messageList',
-    storageMessageList ? [...storageMessageList, ...data] : data
-  )
+  })
+
+  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
   storage.setItem(uid + 'messageStartTime', data[0].createTime)
-  setMessageCount()
-  if (keyVal) {
+  if (type === 'io') {
     data.forEach((item) => {
+      const key = keyVal || item.from_uid === uid ? item.to_uid : item.from_uid
       const findIndex = state.list.findIndex(
-        (item) => item.from_uid === keyVal || item.to_uid === keyVal
+        (item) => item.from_uid === key || item.to_uid === key
       )
-      state.list[findIndex] = {
-        ...transferData(item),
-        count: item.count,
-        userinfo: item.userinfo
+      console.log(findIndex)
+      if (findIndex === -1) {
+        state.list.push({
+          ...transferData({
+            ...item
+          }),
+          count: messageList.get(key).count
+        })
+      } else {
+        state.list[findIndex] = {
+          ...transferData({
+            ...item,
+            userinfo: state.list[findIndex].userinfo
+          }),
+          count: messageList.get(key).count
+        }
       }
     })
   } else {
@@ -81,17 +99,28 @@ function handleMessageData(data, keyVal) {
       }
     })
   }
+  setMessageCount()
 }
 function messageClick(data, index) {
   state.list[index].count = 0
-  sessionStorage.setItem(
-    'chat' + data.userinfo._id,
-    JSON.stringify(messageList.get(data.userinfo._id))
-  )
-  setReadMessage(data.userinfo._id)
-  openUserChat(data.userinfo._id)
+  const key = data.userinfo._id
+  const temp = messageList.get(key)
+  // 本地数据修改为已读
+  const list = temp.list.map((item) => {
+    item.is_read = '1'
+    return item
+  })
+  messageList.set(key, {
+    list,
+    count: 0
+  })
+  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
+  // 修改与用户的已读状态
+  setReadMessage(key)
+  openUserChat(key)
   setMessageCount()
 }
+// 设置tab未读数量
 function setMessageCount() {
   let count = 0
   state.list.forEach((item, key) => {
@@ -101,12 +130,11 @@ function setMessageCount() {
 }
 // 发送成功后更新列表
 emitter.on('send_message', (data) => {
-  handleMessageData([data], data.to_uid)
+  handleMessageData([data], data.to_uid, 'io')
 })
 // 接收后更新列表
 emitter.on('message', (data) => {
-  const key = data.from_uid === uid ? data.to_uid : data.from_uid
-  handleMessageData([data], key)
+  handleMessageData([data], '', 'io')
   setMessageCount()
 })
 </script>
@@ -118,7 +146,8 @@ emitter.on('message', (data) => {
     @click-right="router.push('search')"
   />
   <div class="message">
-    <ul class="message_list">
+    <van-empty description="空空如也" v-if="state.list.length === 0" />
+    <ul class="message_list" v-else>
       <li
         class="message_item"
         v-for="(item, index) in state.list"
