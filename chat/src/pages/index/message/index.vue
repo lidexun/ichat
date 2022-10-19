@@ -9,95 +9,105 @@ import router from '@/router'
 
 const uid = storage.getItem('userInfo')._id
 const store = useMessageStore()
+const storageMessageList = storage.getItem(uid + 'messageList') || {}
+let messageList = new Map()
 let state = reactive({
   list: []
 })
-let messageList = new Map()
-let messageCount = new Map()
-getMessage().then((res) => {
-  const { data } = res
+onMounted(() => {
+  // 先拿本地缓存数据
+  if (storageMessageList) {
+    handleMessageData(storageMessageList)
+  }
+  最后一条数据的记录时间
+  const time = storage.getItem(uid + 'messageStartTime') || 0
+  getMessage({ time }).then((res) => {
+    const { data } = res
+    if (data.length === 0) {
+      return
+    }
+    handleMessageData(data)
+  })
+})
+function handleMessageData(data, keyVal) {
   for (let index = 0; index < data.length; index++) {
     const item = data[index]
-    // 总一下未读消息
+    const key = keyVal || item.from_uid === uid ? item.to_uid : item.from_uid
+    const temp = messageList.get(key)
+    let count = !temp ? 0 : temp.count
     if (item.from_uid !== uid && Number.parseInt(item.is_read) === 0) {
-      const temp = messageCount.get(item.from_uid)
-      if (messageCount.get(item.from_uid)) {
-        messageCount.set(item.from_uid, temp + 1)
-      } else {
-        messageCount.set(item.from_uid, 1)
-      }
+      count = count + 1
     }
-    const key = item.from_uid === uid ? item.to_uid : item.from_uid
-    let temp = messageList.get(key)
-    if (temp) {
-      messageList.set(key, [...temp, item])
-    } else {
-      messageList.set(key, [item])
-    }
-  }
-  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
-  messageList.forEach((item, key) => {
-    state.list.push({
-      ...transferData(item[0]),
-      count: messageCount.get(key)
+    messageList.set(key, {
+      list: temp ? [...temp.list, item] : [item],
+      count
     })
-  })
+  }
+  // Object.fromEntries
+  storage.setItem(
+    uid + 'messageList',
+    storageMessageList ? [...storageMessageList, ...data] : data
+  )
+  storage.setItem(uid + 'messageStartTime', data[0].createTime)
   setMessageCount()
-})
+  if (keyVal) {
+    data.forEach((item) => {
+      const findIndex = state.list.findIndex(
+        (item) => item.from_uid === keyVal || item.to_uid === keyVal
+      )
+      state.list[findIndex] = {
+        ...transferData(item),
+        count: item.count,
+        userinfo: item.userinfo
+      }
+    })
+  } else {
+    messageList.forEach((item, key) => {
+      const findIndex = state.list.findIndex(
+        (item) => item.from_uid === key || item.to_uid === key
+      )
+      if (findIndex === -1) {
+        state.list.push({
+          ...transferData(item.list[0]),
+          count: item.count,
+          userinfo: item.list[0].userinfo
+        })
+      } else {
+        state.list[findIndex] = {
+          ...transferData(item.list[0]),
+          count: item.count,
+          userinfo: item.list[0].userinfo
+        }
+      }
+    })
+  }
+}
 function messageClick(data, index) {
-  messageCount.set(data.userinfo._id, 0)
   state.list[index].count = 0
-  setMessageCount()
+  sessionStorage.setItem(
+    'chat' + data.userinfo._id,
+    JSON.stringify(messageList.get(data.userinfo._id))
+  )
   setReadMessage(data.userinfo._id)
   openUserChat(data.userinfo._id)
+  setMessageCount()
 }
 function setMessageCount() {
   let count = 0
-  messageCount.forEach((item, key) => {
-    count += item
+  state.list.forEach((item, key) => {
+    count += item.count
   })
   store.setCount(count)
 }
 // 发送成功后更新列表
 emitter.on('send_message', (data) => {
-  const key = data.to_uid
-  let temp = messageList.get(key)
-  if (temp) {
-    messageList.set(key, [...temp, data])
-  } else {
-    messageList.set(key, [data])
-  }
-  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
-  const findIndex = state.list.findIndex(
-    (item) => item.from_uid === key || item.to_uid === key
-  )
-  state.list[findIndex] = {
-    ...transferData(data),
-    userinfo: data.userinfo
-  }
+  handleMessageData([data], data.to_uid)
 })
 // 接收后更新列表
 emitter.on('message', (data) => {
   const key = data.from_uid === uid ? data.to_uid : data.from_uid
-  let temp = messageList.get(key)
-  let count = messageCount.get(key)
-  if (temp) {
-    messageList.set(key, [...temp, data])
-    messageCount.set(key, count + 1)
-  } else {
-    messageList.set(key, [data])
-    messageCount.set(key, 1)
-  }
-  const findIndex = state.list.findIndex(
-    (item) => item.from_uid === key || item.to_uid === key
-  )
-  state.list[findIndex] = {
-    ...transferData(data),
-    count: messageCount.get(key),
-    userinfo: data.userinfo
-  }
+  handleMessageData([data], key)
   setMessageCount()
-  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
 })
 </script>
 <template>
