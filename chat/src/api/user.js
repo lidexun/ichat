@@ -12,11 +12,11 @@ export function search(params) {
   return http.get('/search', { params })
 }
 
-export function message(params) {
+export function sendMessage(params) {
   return http.post('/user/message', params)
 }
 export function getMessage(params) {
-  return http.get('/user/message')
+  return http.get('/user/message', { params })
 }
 export function setReadMessage(uid) {
   return http.put('/user/message/set_read/' + uid)
