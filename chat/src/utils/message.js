@@ -31,7 +31,7 @@ export function transferData(data) {
     .replace(/&amp;/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/<br\/>/g, ' ')
-  tempData.addtime = dateFormat(data.createdTime)
-  tempData.timestamp = Math.round(new Date(data.createdTime) / 1000)
+  tempData.addtime = dateFormat(data.createTime)
+  tempData.timestamp = Math.round(new Date(data.createTime) / 1000)
   return tempData
 }
