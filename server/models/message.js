@@ -11,7 +11,7 @@ const messageSchema = new Schema({
   },
   content_type: { type: String, default: 1 },
   content: { type: String, default: '' },
-  createdTime: {
+  createTime: {
     type: Date,
     default: Date.now
   },

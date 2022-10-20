@@ -120,8 +120,10 @@ export const message = async (req, res, next) => {
       is_read: 0
     })
     const userinfo = await User.find({
-      _id: to_uid
-    }).select(['email', 'username', 'email', '_id', 'avatar', 'createdTime'])
+      _id: {
+        $in: [from_uid, to_uid]
+      }
+    }).select(['email', 'username', 'email', '_id', 'avatar', 'createTime'])
     const toUserID = onlineUsers.get(to_uid)
     if (toUserID) {
       io.sockets.to(toUserID).emit('message', {
@@ -133,7 +135,7 @@ export const message = async (req, res, next) => {
       status: 200,
       data: {
         ...data._doc,
-        userinfo: userinfo[0]
+        userinfo: userinfo[1]
       },
       message: ''
     })
@@ -145,6 +147,7 @@ export const message = async (req, res, next) => {
 export const messageHistory = async (req, res, next) => {
   try {
     const { uid } = await verifyToken(req.headers.token)
+    const { time } = req.query
     let data = await Message.find({
       $or: [
         {
@@ -153,8 +156,11 @@ export const messageHistory = async (req, res, next) => {
         {
           to_uid: uid
         }
-      ]
-    }).sort({ createdTime: -1 })
+      ],
+      createTime: {
+        $gt: time
+      }
+    }).sort({ createTime: -1 })
     if (data.length === 0) {
       return res.json({ status: 200, data, message: '' })
     }
@@ -175,7 +181,7 @@ export const messageHistory = async (req, res, next) => {
       _id: {
         $in: users
       }
-    }).select(['email', 'username', 'email', '_id', 'avatar', 'createdTime'])
+    }).select(['email', 'username', 'email', '_id', 'avatar', 'createTime'])
     const userMap = new Map()
     for (let index = 0; index < userData.length; index++) {
       userMap.set(userData[index]._id.toHexString(), userData[index]._doc)
