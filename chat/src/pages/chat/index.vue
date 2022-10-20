@@ -1,19 +1,15 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
+import { sendMessage } from '../../api/user.js'
+import { transferData } from '@/utils/message.js'
 import emitter from '../../utils/bus.js'
 import storage from '../../utils/storage.js'
-import { message } from '../../api/user.js'
-import { transferData } from '@/utils/message.js'
-import { useMessageStore } from '@/store/index.js'
-const store = useMessageStore()
 
 const router = useRouter()
 const route = useRoute()
 const userInfo = storage.getItem('userInfo')
-// const taUserInfo = ref(null)
-const messageList = new Map(
-  Object.entries(storage.getItem(userInfo._id + 'messageList'))
-)
+const messageListStorage = sessionStorage.getItem('chat' + route.query._id)
+const messageList = messageListStorage ? JSON.parse(messageListStorage) : []
 let page = 1
 let limit = 10
 let isLoading = ref(false)
@@ -23,16 +19,15 @@ let main = ref(null)
 let chatList = ref([])
 
 onMounted(() => {
-  const temp = messageList
-    .get(route.query._id)
-    .sort((a, b) => new Date(b.createdTime) - new Date(a.createdTime))
-  // console.log(temp)
-  // page * limit
-  const begin = (page - 1) * limit
-  const end = page * limit
-  // // 初始化
-  chatList.value = temp.slice(begin, end).map((item) => transferData(item))
-  scrollBottom()
+  if (messageList.length !== 0) {
+    const temp = messageList.list.sort(
+      (a, b) => new Date(b.createTime) - new Date(a.createTime)
+    )
+    const begin = (page - 1) * limit
+    const end = page * limit
+    chatList.value = temp.slice(begin, end).map((item) => transferData(item))
+    scrollBottom()
+  }
 })
 
 function scrollBottom() {
@@ -43,7 +38,7 @@ function scrollBottom() {
 function contentInput(e) {
   content.value = e.target.innerHTML
 }
-function sendMessage() {
+function sendContent() {
   if (!content.value) return
   let contentT = content_input.value.innerText
     .replace(/↵/g, '<br/>')
@@ -56,7 +51,7 @@ function sendMessage() {
     to_uid: route.query._id,
     from_uid: userInfo._id
   }
-  message(params).then((res) => {
+  sendMessage(params).then((res) => {
     chatList.value.push(res.data)
     emitter.emit('send_message', res.data)
     content_input.value.textContent = ''
@@ -72,40 +67,40 @@ function onRefresh() {}
       <van-nav-bar left-arrow @click-left="router.back()" />
     </header>
     <main class="main" ref="main">
-      <van-pull-refresh
-        v-model="isLoading"
-        :pulling-text="''"
-        :loosing-text="''"
-        :loading-text="''"
-        @refresh="onRefresh"
-      >
-        <ul class="chat_list">
-          <li
-            v-for="(item, index) in chatList"
-            class="chat_list_item"
-            :class="{
-              on: item.from_uid === userInfo._id
-            }"
-            :style="{
-              order: `${Math.round(new Date(item.createdTime) / 1000)}`
-            }"
-          >
-            <user-avatar
-              :width="'38px'"
-              :height="'38px'"
-              :name="
-                item.from_uid === userInfo._id
-                  ? userInfo.username
-                  : item.userinfo.username
-              "
-              round
-            />
-            <div class="chat_list_content">
-              <div class="content" v-html="item.contentCopy"></div>
-            </div>
-          </li>
-        </ul>
-      </van-pull-refresh>
+      <!-- <van-pull-refresh
+      v-model="isLoading"
+      :pulling-text="''"
+      :loosing-text="''"
+      :loading-text="''"
+      @refresh="onRefresh"
+    > -->
+      <ul class="chat_list">
+        <li
+          v-for="(item, index) in chatList"
+          class="chat_list_item"
+          :class="{
+            on: item.from_uid === userInfo._id
+          }"
+          :style="{
+            order: item.timestamp
+          }"
+        >
+          <user-avatar
+            :width="'38px'"
+            :height="'38px'"
+            :name="
+              item.from_uid === userInfo._id
+                ? userInfo.username
+                : item.userinfo.username
+            "
+            round
+          />
+          <div class="chat_list_content">
+            <div class="content" v-html="item.contentCopy"></div>
+          </div>
+        </li>
+      </ul>
+      <!-- </van-pull-refresh> -->
     </main>
     <footer class="footer">
       <div class="emoji">
@@ -126,7 +121,7 @@ function onRefresh() {}
           size="small"
           :disabled="content.length > 0 ? false : true"
           type="primary"
-          @click="sendMessage"
+          @click="sendContent"
           >发送</van-button
         >
       </div>
@@ -208,7 +203,8 @@ function onRefresh() {}
   }
 }
 .chat_list {
-  margin: 12px;
+  margin: 0 12px;
+  padding-bottom: 12px;
   display: flex;
   flex-direction: column;
   .chat_list_item {
