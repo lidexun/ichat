@@ -61,7 +61,7 @@ const errorHandle = (status, other) => {
 
 // 创建axios实例
 var instance = axios.create({ timeout: 1000 * 12 })
-instance.defaults.baseURL = 'http://localhost:6001'
+instance.defaults.baseURL = import.meta.env.VITE_API_URL
 // 设置post请求头
 instance.defaults.headers.post['Content-Type'] =
   'application/x-www-form-urlencoded'
