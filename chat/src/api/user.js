@@ -21,3 +21,6 @@ export function getMessage(params) {
 export function setReadMessage(uid) {
   return http.put('/user/message/set_read/' + uid)
 }
+export function getTaUserInfo(uid) {
+  return http.get('/user/detail/' + uid)
+}

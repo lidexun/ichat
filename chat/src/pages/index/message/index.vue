@@ -1,12 +1,12 @@
 <script setup>
+import { useRoute, useRouter } from 'vue-router'
 import { openUserChat } from '@/utils/user.js'
 import { getMessage, setReadMessage } from '@/api/user.js'
 import { transferData } from '@/utils/message.js'
 import { useMessageStore } from '@/store/index.js'
 import storage from '@/utils/storage.js'
 import emitter from '@/utils/bus.js'
-import router from '@/router'
-
+const router = useRouter()
 const uid = storage.getItem('userInfo')._id
 const store = useMessageStore()
 const storageMessageList = storage.getItem(uid + 'messageList')
@@ -16,9 +16,11 @@ let messageList = storageMessageList
 let state = reactive({
   list: []
 })
+// 最后一条数据的记录时间
+let time = storage.getItem(uid + 'messageStartTime') || 0
 onMounted(() => {
   // 先拿本地缓存数据渲染
-  if (messageList.size !== 0) {
+  if (time !== 0 && messageList.size !== 0) {
     messageList.forEach((item) => {
       state.list.push({
         ...transferData(item.list[0]),
@@ -28,8 +30,6 @@ onMounted(() => {
     })
     setMessageCount()
   }
-  // 最后一条数据的记录时间
-  const time = storage.getItem(uid + 'messageStartTime') || 0
   getMessage({ time }).then((res) => {
     const { data } = res
     if (data.length === 0) {
@@ -46,13 +46,17 @@ function handleMessageData(data, keyVal, type) {
     if (item.from_uid !== uid && Number.parseInt(item.is_read) === 0) {
       count = count + 1
     }
-    let tempList = temp ? [item].concat(temp.list) : [item]
+    let tempList = temp ? temp.list : []
+    if (type === 'io') {
+      tempList.unshift(item)
+    } else {
+      tempList.push(item)
+    }
     messageList.set(key, {
       list: tempList,
       count
     })
   })
-
   storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
   storage.setItem(uid + 'messageStartTime', data[0].createTime)
   if (type === 'io') {
@@ -61,7 +65,6 @@ function handleMessageData(data, keyVal, type) {
       const findIndex = state.list.findIndex(
         (item) => item.from_uid === key || item.to_uid === key
       )
-      console.log(findIndex)
       if (findIndex === -1) {
         state.list.push({
           ...transferData({
@@ -100,10 +103,20 @@ function handleMessageData(data, keyVal, type) {
     })
   }
   setMessageCount()
+  return new Promise((resolve, reject) => {
+    resolve()
+  })
 }
 function messageClick(data, index) {
-  state.list[index].count = 0
   const key = data.userinfo._id
+  // 修改与用户的已读状态
+  handleMessageRead(key)
+  openUserChat(key)
+}
+function handleMessageRead(key) {
+  const index = state.list.findIndex((item) => item.userinfo._id === key)
+  state.list[index].count = 0
+
   const temp = messageList.get(key)
   // 本地数据修改为已读
   const list = temp.list.map((item) => {
@@ -115,10 +128,8 @@ function messageClick(data, index) {
     count: 0
   })
   storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
-  // 修改与用户的已读状态
-  setReadMessage(key)
-  openUserChat(key)
   setMessageCount()
+  setReadMessage(key)
 }
 // 设置tab未读数量
 function setMessageCount() {
@@ -134,8 +145,14 @@ emitter.on('send_message', (data) => {
 })
 // 接收后更新列表
 emitter.on('message', (data) => {
-  handleMessageData([data], '', 'io')
-  setMessageCount()
+  console.log(data)
+  handleMessageData([data], '', 'io').then(() => {
+    // 修改与用户的已读状态
+    if (router.currentRoute.value.name === 'chat') {
+      handleMessageRead(data.from_uid)
+    }
+  })
+  emitter.emit('chat_message' + data.from_uid, data)
 })
 </script>
 <template>
@@ -213,7 +230,7 @@ emitter.on('message', (data) => {
       font-weight: bold;
     }
     .content {
-      width: 100%;
+      width: 85%;
       font-size: 12px;
       color: #b1b1b1;
       overflow: hidden;
