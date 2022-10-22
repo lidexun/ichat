@@ -1,9 +1,10 @@
 <script setup>
 import { login, register } from '@/api/user.js'
+import { useUserInfoStore } from '@/store/index.js'
 import loginForm from './components/login_form.vue'
 import router from '@/router/index.js'
 import storage from '@/utils/storage.js'
-import { useUserInfoStore } from '@/store/index.js'
+import emitter from '@/utils/bus.js'
 
 import { Toast } from 'vant'
 const type = ref('login')
@@ -29,6 +30,7 @@ const submit = async (data) => {
     const store = useUserInfoStore()
     store.setUseInfo(res.data)
     storage.setItem('userInfo', res.data)
+    emitter.emit('login')
     router.push('/')
     Toast.clear()
   } catch {}
