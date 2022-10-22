@@ -1,5 +1,8 @@
 <script setup>
 import storage from '../../../utils/storage.js'
+import router from '@/router'
+import emitter from '@/utils/bus.js'
+
 import { createAvatar } from '@dicebear/avatars'
 import * as style from '@dicebear/avatars-initials-sprites'
 const userInfo = storage.getItem('userInfo')
@@ -15,6 +18,11 @@ function share() {
     url: window.location.origin
   }
   navigator.share(shareOpts)
+}
+function loginOut() {
+  storage.clearAll()
+  emitter.emit('login_out')
+  router.push('/login')
 }
 </script>
 <template>
@@ -40,7 +48,12 @@ function share() {
       <van-cell title="分享应用" is-link @click="share" />
     </van-cell-group>
     <div class="out">
-      <van-button size="small" type="danger" block class="out_button"
+      <van-button
+        @click="loginOut"
+        size="small"
+        type="danger"
+        block
+        class="out_button"
         >退出</van-button
       >
     </div>
