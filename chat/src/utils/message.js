@@ -1,4 +1,4 @@
-function dateFormat(t) {
+export function dateFormat(t) {
   var nowDate = new Date()
   if (t) {
     // t = t * 1000
@@ -23,15 +23,17 @@ function dateFormat(t) {
       : nowDate.getSeconds()
   return year + '-' + month + '-' + date + ' ' + hour + ':' + minute
 }
-
+export function timestamp(t) {
+  return Math.round(new Date(t) / 1000)
+}
 export function transferData(data) {
   const tempData = data
-  tempData.contentCopy = tempData.content
+  tempData.contentCopy = data.content
   tempData.content = tempData.content
     .replace(/&amp;/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/<br\/>/g, ' ')
   tempData.addtime = dateFormat(data.createTime)
-  tempData.timestamp = Math.round(new Date(data.createTime) / 1000)
+  tempData.timestamp = timestamp(data.createTime)
   return tempData
 }
