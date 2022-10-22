@@ -2,47 +2,37 @@
 import { useRouter } from 'vue-router'
 import { search } from '../../api/user.js'
 import { openUserChat } from '../../utils/user.js'
+import { debounce } from '@/utils'
 
-const value = ref('')
+const username = ref('')
 const list = ref([])
 const router = useRouter()
-function onSearch(username) {
-  if (!username) {
+const onSearch = debounce(function () {
+  if (!username.value) {
     return
   }
   search({
-    username
+    username: username.value
   }).then((res) => {
     list.value = res.data.list
   })
-}
-function onCancel() {
-  router.back()
-}
+}, 300)
 </script>
 <template>
   <form action="/">
     <van-search
-      v-model="value"
+      v-model="username"
       placeholder="请输入用户名"
       show-action
       autofocus
       @search="onSearch"
-      @cancel="onCancel"
+      @cancel="router.push('/message')"
       @update:model-value="onSearch"
     />
   </form>
   <ul class="search_list">
     <li v-for="(item, index) in list" @click="openUserChat(item._id)">
-      <van-image
-        class="image"
-        :src="
-          item.avatar ||
-          `https://avatars.dicebear.com/api/initials/:${item.username}.svg`
-        "
-        fit="cover"
-        round
-      />
+      <user-avatar round class="image" :name="item.username"></user-avatar>
       <div class="username van-hairline--bottom">{{ item.username }}</div>
     </li>
   </ul>
