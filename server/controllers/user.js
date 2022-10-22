@@ -128,14 +128,14 @@ export const message = async (req, res, next) => {
     if (toUserID) {
       io.sockets.to(toUserID).emit('message', {
         ...data._doc,
-        userinfo: userinfo[0]
+        userinfo: userinfo.find((item) => item._id.toHexString() === from_uid)
       })
     }
     return res.json({
       status: 200,
       data: {
         ...data._doc,
-        userinfo: userinfo[1]
+        userinfo: userinfo.find((item) => item._id.toHexString() === to_uid)
       },
       message: ''
     })
@@ -215,6 +215,21 @@ export const messageRead = async (req, res, next) => {
       status: 200,
       data: {},
       message: '已更新已读消息'
+    })
+  } catch (ex) {
+    next(ex)
+  }
+}
+export const userDetail = async (req, res, next) => {
+  try {
+    const { uid } = req.params
+    const userData = await User.find({
+      _id: uid
+    }).select(['email', 'username', 'email', '_id', 'avatar', 'createTime'])
+    return res.json({
+      status: 200,
+      data: userData[0],
+      message: ''
     })
   } catch (ex) {
     next(ex)
