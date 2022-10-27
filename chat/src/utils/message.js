@@ -2,7 +2,7 @@ export function dateFormat(t) {
   var nowDate = new Date()
   if (t) {
     // t = t * 1000
-    nowDate = new Date(t)
+    nowDate = new Date(t * 1000)
   }
   var year = nowDate.getFullYear()
   var month =
@@ -34,6 +34,6 @@ export function transferData(data) {
     .replace(/&nbsp;/g, ' ')
     .replace(/<br\/>/g, ' ')
   tempData.addtime = dateFormat(data.createTime)
-  tempData.timestamp = timestamp(data.createTime)
+  tempData.timestamp = data.createTime
   return tempData
 }

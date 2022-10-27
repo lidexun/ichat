@@ -33,7 +33,7 @@ const list = reactive([
       <component :is="Component" />
     </keep-alive>
   </router-view>
-  <van-tabbar v-model="active" route>
+  <van-tabbar v-model="active" route fixed safe-area-inset-bottom>
     <van-tabbar-item
       v-for="(item, index) in list"
       :badge="item.badge"

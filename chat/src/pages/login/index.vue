@@ -28,7 +28,7 @@ const submit = async (data) => {
       res = await login(data)
     }
     const store = useUserInfoStore()
-    store.setUseInfo(res.data)
+    store.setUserInfo(res.data)
     storage.setItem('userInfo', res.data)
     emitter.emit('login')
     router.push('/')
@@ -67,7 +67,7 @@ const submit = async (data) => {
 .login_logo {
   display: flex;
   justify-content: center;
-  margin-top: 80px;
+  margin-top: 50px;
   margin-bottom: 30px;
   flex-direction: column;
   align-items: center;

@@ -2,22 +2,16 @@
 import storage from '../../../utils/storage.js'
 import router from '@/router'
 import emitter from '@/utils/bus.js'
-
-import { createAvatar } from '@dicebear/avatars'
-import * as style from '@dicebear/avatars-initials-sprites'
 const userInfo = storage.getItem('userInfo')
-let svg = createAvatar(style, {
-  seed: userInfo.name,
-  dataUri: false
-  // ... and other options
-})
 function share() {
-  const shareOpts = {
-    title: 'iChat',
-    text: 'iChat 一款聊天应用',
-    url: window.location.origin
+  if (window.navigator.share) {
+    const shareOpts = {
+      title: 'iChat',
+      text: 'iChat 一款聊天应用',
+      url: window.location.origin
+    }
+    window.navigator.share(shareOpts)
   }
-  navigator.share(shareOpts)
 }
 function loginOut() {
   storage.clearAll()

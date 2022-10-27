@@ -1,95 +1,77 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
-import { sendMessage, getTaUserInfo } from '../../api/user.js'
+import { sendMessage, getTaUserInfo, setReadMessage } from '../../api/user.js'
 import { transferData, dateFormat, timestamp } from '@/utils/message.js'
 import emitter from '../../utils/bus.js'
 import storage from '../../utils/storage.js'
+import { debounce } from '../../utils/index.js'
+
+import {
+  addIndexDB,
+  readIndexDB,
+  updateIndexDB,
+  readAllMsgIndexDB
+} from '@/utils/indexDB.js'
 
 const router = useRouter()
 const route = useRoute()
 const userInfo = storage.getItem('userInfo')
 const taUserInfo = ref({})
-const messageListStorage = storage.getItem(userInfo._id + 'messageList')
-const messageList = messageListStorage
-  ? new Map(Object.entries(messageListStorage))
-  : new Map()
 let page = 1
 let limit = 15
-let isLoading = ref(false)
 let content = ref('')
 let content_input = ref(null)
-let chatList = ref([])
-let chatListEnding = ref(false)
 let times = new Map()
-onMounted(() => {
-  if (
-    !messageList.get(route.query._id) ||
-    messageList.get(route.query._id).list.length < 20
-  ) {
-    chatListEnding.value = true
-  }
-  getTaUserInfo(route.query._id).then((res) => {
-    taUserInfo.value = res.data
-  })
-  if (messageList.size !== 0) {
-    moveChatData()
-    chatScrollTop()
-  }
+let chat = reactive({
+  list: [],
+  listEnding: false,
+  isLoading: false
 })
-function moveChatData() {
-  const begin = (page - 1) * limit
-  const end = page * limit
-  let temp = messageList.get(route.query._id).list
-  temp.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
-  let list = temp.slice(begin, end).map((item) => transferData(item))
-  if (list.length === 0) {
-    isLoading.value = false
+let messageList = []
+
+const init = async () => {
+  const res = await getTaUserInfo(route.query._id)
+  taUserInfo.value = res.data[0]
+  messageList = await readAllMsgIndexDB(
+    'messageStore',
+    'chatKey',
+    route.query._id
+  )
+  chatMoveData()
+  chatScrollTop()
+}
+const chatMoveData = async () => {
+  if (chat.listEnding) {
     return
   }
+  const begin = (page - 1) * limit
+  const end = page * limit
   const tempTimes = []
-  for (let index = 0; index < list.length; index++) {
-    let tempAddTime = dateFormat(list[index].createTime)
-    tempAddTime = tempAddTime.split(' ')
-    if (index === list.length - 1) {
-      tempTimes.pop()
-    } else {
+  const list = messageList
+    .sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+    .slice(begin, end)
+    .map((item) => {
+      let tempAddTime = dateFormat(item.createTime).split(' ')
       if (!times.get(tempAddTime[0])) {
         times.set(tempAddTime[0], 1)
         tempTimes.push({
           type: 2,
           addtime: tempAddTime[0],
-          timestamp: timestamp(`${tempAddTime[0]} 00:00:00`)
+          timestamp: Math.round(+new Date(`${tempAddTime[0]} 00:00:00`) / 1000)
         })
       }
-    }
-  }
-  chatList.value = list.concat(chatList.value, tempTimes)
-  if (temp.length <= chatList.value.length) {
-    if (!chatListEnding.value) {
-      const lastData = chatList.value[0]
-      let tempAddTime = dateFormat(lastData.createTime)
-      tempAddTime = tempAddTime.split(' ')
-      chatList.value.push({
-        type: 2,
-        addtime: tempAddTime[0],
-        timestamp: timestamp(`${tempAddTime[0]} 00:00:00`)
-      })
-      chatListEnding.value = true
-    }
-  }
-  if (page !== 1) {
-    const h = document.body.offsetHeight
-    nextTick(() => {
-      chatScrollTop(document.body.offsetHeight - h)
+      return transferData(item)
     })
+
+  if (chat.list.length < limit) {
+    chat.listEnding = true
   }
-  isLoading.value = false
+  chat.list = chat.list.concat(list, tempTimes)
   page++
 }
-
 function chatScrollTop(top = 999999) {
   nextTick(() => {
-    document.documentElement.scrollTop = top
+    document.documentElement.scrollIntoView(false)
   })
 }
 function contentInput(e) {
@@ -113,16 +95,35 @@ function sendContent() {
     to_uid: route.query._id,
     from_uid: userInfo._id
   }
+  const msgKey = route.query._id + Math.round(+new Date() / 1000)
+  chat.list.push(
+    transferData({
+      ...params,
+      //  01 成功 2等待 3 失败
+      isSendType: 1,
+      createTime: Math.round(+new Date() / 1000),
+      msgKey
+    })
+  )
+  chatScrollTop()
+  content_input.value.textContent = ''
+  content.value = ''
   sendMessage(params).then((res) => {
-    chatList.value.push(transferData(res.data))
+    const findIndex = chat.list.findIndex((item) => item.msgKey === msgKey)
+    chat.list[findIndex] = transferData(res.data)
     emitter.emit('send_message', res.data)
-    content_input.value.textContent = ''
-    content.value = ''
-    chatScrollTop()
+    // chatScrollTop()
   })
 }
-function onRefresh() {
-  moveChatData()
+
+const pulldownRefresh = async () => {
+  await chatMoveData()
+  if (page !== 1) {
+    const h = document.body.offsetHeight
+    nextTick(() => {
+      document.documentElement.scrollTop = document.body.offsetHeight - h
+    })
+  }
 }
 function hideKeyboard() {
   document.activeElement.blur()
@@ -136,9 +137,7 @@ function inputFocus() {
       // ios键盘在浏览器上bug
       if (isIos) {
         setTimeout(() => {
-          nextTick(() => {
-            document.documentElement.scrollIntoView(false)
-          })
+          chatScrollTop()
         }, 100)
       }
     },
@@ -147,18 +146,48 @@ function inputFocus() {
 }
 // 接收
 emitter.on('chat_message' + route.query._id, (data) => {
-  chatList.value.push(transferData(data))
+  chat.list.push(transferData(data))
   nextTick(() => {
     const el = document.documentElement
     const rect = el.getBoundingClientRect()
+    // console.log(
+    //   Number.parseInt(rect.height),
+    //   Number.parseInt(rect.bottom),
+    //   Number.parseInt(rect.height) - Number.parseInt(rect.bottom)
+    // )
     // 如果处于底部50内，滚动到底部
-    if (rect.height - rect.bottom > 50) {
+    if (Number.parseInt(rect.height) - Number.parseInt(rect.bottom) > 50) {
       el.scrollIntoView({
         behavior: 'smooth',
         block: 'end',
         inline: 'nearest'
       })
     }
+  })
+  t()
+})
+const t = debounce(function () {
+  setReadMessage(route.query._id)
+}, 2000)
+async function handleMessageRead(key, index) {
+  const data = await readAllMsgIndexDB('messageStore', 'chatKey', key)
+  const temp = data.filter((item) => item.is_read === 0)
+  temp.forEach((item) => {
+    if (item.is_read === 0) {
+      item.is_read = '1'
+      updateIndexDB('messageStore', item)
+    }
+  })
+  const obj = await readIndexDB(['latestMsgFetched'], key)
+  updateIndexDB('latestMsgFetched', {
+    ...obj,
+    count: 0
+  })
+}
+onMounted(() => {
+  init()
+  setReadMessage(route.query._id).then(() => {
+    handleMessageRead(route.query._id)
   })
 })
 </script>
@@ -172,15 +201,15 @@ emitter.on('chat_message' + route.query._id, (data) => {
       placeholder
     />
     <van-pull-refresh
-      :disabled="chatListEnding"
-      v-model="isLoading"
+      :disabled="chat.listEnding"
+      v-model="chat.isLoading"
       :pulling-text="'下拉加载更多'"
       :loosing-text="'松开加载数据'"
       :loading-text="'加载中'"
-      @refresh="onRefresh"
+      @refresh="pulldownRefresh"
     >
       <ul class="chat_list" id="chat_list" @touchstart="hideKeyboard()">
-        <template v-for="(item, index) in chatList">
+        <template v-for="(item, index) in chat.list">
           <li
             v-if="!item.type"
             class="chat_list_item"
@@ -192,17 +221,29 @@ emitter.on('chat_message' + route.query._id, (data) => {
             }"
           >
             <user-avatar
-              :key="index + ' ' + item.timestamp"
+              :key="
+                item.from_uid === userInfo._id
+                  ? userInfo.username
+                  : taUserInfo.username
+              "
               :width="'38px'"
               :height="'38px'"
               :name="
                 item.from_uid === userInfo._id
                   ? userInfo.username
-                  : item.userinfo.username
+                  : taUserInfo.username
               "
               round
             />
             <div class="chat_list_content">
+              <template v-if="item.from_uid === userInfo._id">
+                <van-loading
+                  v-if="item.isSendType === 1"
+                  class="loading"
+                  size="0.18rem"
+                  color="#1989fa"
+                />
+              </template>
               <div class="content" v-html="item.contentCopy"></div>
             </div>
           </li>
@@ -222,8 +263,8 @@ emitter.on('chat_message' + route.query._id, (data) => {
     </van-pull-refresh>
     <footer class="footer">
       <!-- <div class="emoji">
-    <van-icon name="smile-o" size="30" />
-  </div> -->
+        <van-icon name="smile-o" size="30" />
+      </div> -->
       <div class="content">
         <div
           ref="content_input"
@@ -234,10 +275,12 @@ emitter.on('chat_message' + route.query._id, (data) => {
           @input="contentInput"
           @focus="inputFocus()"
           autocapitalize="off"
+          safe-area-inset-bottom
         ></div>
       </div>
-      <div class="footer_button" :class="{ on: content.length > 0 }">
+      <div class="footer_button">
         <van-button
+          :disabled="content.length <= 0"
           class="button"
           size="large"
           type="primary"
@@ -307,11 +350,11 @@ emitter.on('chat_message' + route.query._id, (data) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 0px;
-    opacity: 0;
-    -webkit-transform: scaleX(0);
-    transform: scaleX(0);
-    transition: all 0.1s;
+    width: 66px;
+    // opacity: 0;
+    // -webkit-transform: scaleX(0);
+    // transform: scaleX(0);
+    // transition: all 0.1s;
     .button {
       margin-right: 10px;
       overflow: hidden;
@@ -350,6 +393,18 @@ emitter.on('chat_message' + route.query._id, (data) => {
         margin-right: 12px;
         background-color: var(--van-blue);
         color: var(--van-white);
+        position: relative;
+      }
+      .loading {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin: auto;
+        left: -0.26rem;
+        font-size: 0.16rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
     }
     .chat_list_content {

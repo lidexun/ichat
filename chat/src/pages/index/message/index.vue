@@ -1,135 +1,112 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
+import { getMessage, setReadMessage, getTaUserInfo } from '@/api/user.js'
 import { openUserChat } from '@/utils/user.js'
-import { getMessage, setReadMessage } from '@/api/user.js'
 import { transferData } from '@/utils/message.js'
-import { useMessageStore } from '@/store/index.js'
 import storage from '@/utils/storage.js'
+import { useMessageStore } from '@/store/index.js'
+import {
+  addIndexDB,
+  readIndexDB,
+  updateIndexDB,
+  readAllIndexDB,
+  readAllMsgIndexDB
+} from '@/utils/indexDB.js'
 import emitter from '@/utils/bus.js'
 const router = useRouter()
-const uid = storage.getItem('userInfo')._id
+const userInfo = storage.getItem('userInfo')
+const uid = userInfo._id
+let messageList = new Map()
 const store = useMessageStore()
-const storageMessageList = storage.getItem(uid + 'messageList')
-let messageList = storageMessageList
-  ? new Map(Object.entries(storageMessageList))
-  : new Map()
 let state = reactive({
-  list: []
+  list: null
 })
-// 最后一条数据的记录时间
-let time = storage.getItem(uid + 'messageStartTime') || 0
 onMounted(() => {
-  // 先拿本地缓存数据渲染
-  if (time !== 0 && messageList.size !== 0) {
-    messageList.forEach((item) => {
-      state.list.push({
-        ...transferData(item.list[0]),
-        count: item.count,
-        userinfo: item.list[0].userinfo
-      })
-    })
-    setMessageCount()
-  }
-  getMessage({ time }).then((res) => {
-    const { data } = res
-    if (data.length === 0) {
-      return
-    }
-    handleMessageData(data)
-  })
+  init()
 })
-function handleMessageData(data, keyVal, type) {
+watch(state, (newvalue, oldvalue) => {
+  setMessageCount()
+})
+const init = async () => {
+  const latestMsg = await readAllIndexDB('latestMsgFetched', '')
+  if (latestMsg.length !== 0) {
+    for (let index = 0; index < latestMsg.length; index++) {
+      let item = latestMsg[index]
+      messageList.set(item.userInfo._id, item)
+    }
+    state.list = latestMsg
+  } else {
+    state.list = []
+  }
+  let time = 0
+  if (messageList.size !== 0) {
+    time = latestMsg.reduce((a, b) => {
+      return a.addTime > b.addTime ? a : b
+    }).addTime
+  }
+  const res = await getMessage({ time })
+  if (res.data.length === 0) {
+    return
+  }
+  handleNewMessage(res.data)
+}
+async function handleNewMessage(data = [], keyVal) {
+  let uids = [...messageList.keys()]
+  let usersData = [...messageList.values()].map((item) => item.userInfo)
+  let p = []
   data.forEach((item) => {
-    const key = keyVal || item.from_uid === uid ? item.to_uid : item.from_uid
+    const key = item.from_uid === uid ? item.to_uid : item.from_uid
+    if (!uids.includes(key)) {
+      p.push(key)
+    }
+  })
+  if (p.length > 0) {
+    const res = await getTaUserInfo(p.toString())
+    usersData = usersData.concat(res.data)
+    res.data.forEach((item) => {
+      addIndexDB('userStore', item)
+    })
+  }
+  for (let index = 0; index < data.length; index++) {
+    const item = data[index]
+    const key = item.from_uid === uid ? item.to_uid : item.from_uid
     const temp = messageList.get(key)
+    const userInfo = usersData.find((info) => info._id === key)
     let count = temp !== undefined && temp.count ? temp.count : 0
     if (item.from_uid !== uid && Number.parseInt(item.is_read) === 0) {
       count = count + 1
     }
-    let tempList = temp ? temp.list : []
-    if (type === 'io') {
-      tempList.unshift(item)
-    } else {
-      tempList.push(item)
+    const chatKey = key
+    let obj = {
+      _id: item._id,
+      count,
+      userInfo,
+      latestData: transferData(item),
+      addTime: item.createTime,
+      chatKey
     }
-    messageList.set(key, {
-      list: tempList,
-      count
-    })
-  })
-  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
-  storage.setItem(uid + 'messageStartTime', data[0].createTime)
-  if (type === 'io') {
-    data.forEach((item) => {
-      const key = keyVal || item.from_uid === uid ? item.to_uid : item.from_uid
-      const findIndex = state.list.findIndex(
-        (item) => item.from_uid === key || item.to_uid === key
-      )
-      if (findIndex === -1) {
-        state.list.push({
-          ...transferData({
-            ...item
-          }),
-          count: messageList.get(key).count
-        })
-      } else {
-        state.list[findIndex] = {
-          ...transferData({
-            ...item,
-            userinfo: state.list[findIndex].userinfo
-          }),
-          count: messageList.get(key).count
-        }
+    if (temp) {
+      if (obj.addTime > temp.addTime) {
+        updateIndexDB('latestMsgFetched', obj)
+        messageList.set(key, obj)
+        const findIndex = state.list.findIndex(
+          (item) => item.userInfo._id === key
+        )
+        state.list[findIndex] = obj
       }
-    })
-  } else {
-    messageList.forEach((item, key) => {
-      const findIndex = state.list.findIndex(
-        (item) => item.from_uid === key || item.to_uid === key
-      )
-      if (findIndex === -1) {
-        state.list.push({
-          ...transferData(item.list[0]),
-          count: item.count,
-          userinfo: item.list[0].userinfo
-        })
-      } else {
-        state.list[findIndex] = {
-          ...transferData(item.list[0]),
-          count: item.count,
-          userinfo: item.list[0].userinfo
-        }
-      }
-    })
+    } else {
+      addIndexDB('latestMsgFetched', obj)
+      messageList.set(key, obj)
+      state.list.push(obj)
+    }
+    addIndexDB('messageStore', { ...item, chatKey })
   }
-  setMessageCount()
-  return new Promise((resolve, reject) => {
-    resolve()
-  })
 }
-function messageClick(data, index) {
-  const key = data.userinfo._id
-  // 修改与用户的已读状态
-  handleMessageRead(key)
-  openUserChat(key)
-}
-function handleMessageRead(key) {
-  const index = state.list.findIndex((item) => item.userinfo._id === key)
-  state.list[index].count = 0
 
-  const temp = messageList.get(key)
-  // 本地数据修改为已读
-  const list = temp.list.map((item) => {
-    item.is_read = '1'
-    return item
-  })
-  messageList.set(key, {
-    list,
-    count: 0
-  })
-  storage.setItem(uid + 'messageList', Object.fromEntries(messageList))
-  setMessageCount()
-  setReadMessage(key)
+function clickMessage({ userInfo }, index) {
+  state.list[index].count = 0
+  // 修改与用户的已读状态
+  openUserChat(userInfo._id)
 }
 // 设置tab未读数量
 function setMessageCount() {
@@ -139,47 +116,45 @@ function setMessageCount() {
   })
   store.setCount(count)
 }
+
 // 发送成功后更新列表
 emitter.on('send_message', (data) => {
-  handleMessageData([data], data.to_uid, 'io')
+  handleNewMessage([data])
 })
 // 接收后更新列表
 emitter.on('message', (data) => {
-  console.log(data)
-  handleMessageData([data], '', 'io').then(() => {
-    // 修改与用户的已读状态
-    if (router.currentRoute.value.name === 'chat') {
-      handleMessageRead(data.from_uid)
-    }
-  })
-  emitter.emit('chat_message' + data.from_uid, data)
+  handleNewMessage([data])
 })
 </script>
 <template>
-  <van-nav-bar
-    title="chat"
-    :right-text="'查找用户'"
-    fixed
-    @click-right="router.push('search')"
-  />
-  <div class="message">
+  <van-nav-bar title="聊天" :right-text="'查找用户'" fixed>
+    <template #right>
+      <van-icon
+        name="search"
+        class="search_icon"
+        @click="router.push('search')"
+      />
+    </template>
+  </van-nav-bar>
+
+  <div class="message" v-if="state.list !== null">
     <van-empty description="空空如也" v-if="state.list.length === 0" />
     <ul class="message_list" v-else>
       <li
         class="message_item"
         v-for="(item, index) in state.list"
-        @click="messageClick(item, index)"
         :style="{
-          order: `-${item.timestamp}`
+          order: `-${item.addTime}`
         }"
+        @click="clickMessage(item, index)"
       >
-        <user-avatar :name="item.userinfo.username" round />
+        <user-avatar :name="item.userInfo.username" round />
         <div class="message_item_box van-hairline--bottom">
-          <div class="name" v-text="item.userinfo.username"></div>
+          <div class="name" v-text="item.userInfo.username"></div>
           <div class="content">
-            {{ item.content }}
+            {{ item.latestData.content }}
           </div>
-          <div class="addtime" v-html="item.addtime"></div>
+          <div class="addtime" v-html="item.latestData.addtime"></div>
           <van-badge
             v-show="item.count > 0"
             class="badge"
@@ -245,5 +220,8 @@ emitter.on('message', (data) => {
       right: 0;
     }
   }
+}
+.search_icon {
+  font-size: 18px;
 }
 </style>
