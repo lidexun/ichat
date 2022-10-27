@@ -1,6 +1,11 @@
 * {
   box-sizing: border-box;
 }
+html {
+  font-size: -webkit-calc(100vw / 7.5 * 2);
+  font-size: calc(100vw / 7.5 * 2);
+}
+
 body {
   margin: 0;
   line-height: 1.5715;
@@ -9,7 +14,9 @@ body {
   background-color: #fff;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  font-family: 'MiSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family: 'MiSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 input {
   font: inherit;
@@ -24,7 +31,6 @@ input {
   letter-spacing: inherit;
   animation-duration: 10ms;
   -webkit-tap-highlight-color: transparent;
-}
 }
 img {
   vertical-align: middle;
