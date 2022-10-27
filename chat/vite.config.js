@@ -5,8 +5,19 @@ import Pages from 'vite-plugin-pages'
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from 'unplugin-vue-components/resolvers'
 import AutoImport from 'unplugin-auto-import/vite'
+import postCssPxToRem from 'postcss-pxtorem'
 const config = {
   base: '/ichat/',
+  css: {
+    postcss: {
+      plugins: [
+        postCssPxToRem({
+          rootValue: 100, // 1rem的大小
+          propList: ['*'] // 需要转换的属性，这里选择全部都进行转换
+        })
+      ]
+    }
+  },
   plugins: [
     vue(),
     Components({
