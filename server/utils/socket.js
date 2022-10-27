@@ -8,7 +8,12 @@ function ws(httpServer) {
   global.onlineUsers = new Map()
 
   io.on('connection', (socket) => {
+    // console.log(socket)
     onlineUsers.set(socket.handshake.auth.id, socket.id)
+    // console.log( ;
+    // socket.on('ping', (data) => {
+    //   console.log(data)
+    // })
     // socket.on('message', (data, fromid, toid) => {
     //   const toUserID = onlineUsers.get(toid)
     //   if (toUserID) {

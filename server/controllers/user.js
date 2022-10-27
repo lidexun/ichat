@@ -119,24 +119,13 @@ export const message = async (req, res, next) => {
       content,
       is_read: 0
     })
-    const userinfo = await User.find({
-      _id: {
-        $in: [from_uid, to_uid]
-      }
-    }).select(['email', 'username', 'email', '_id', 'avatar', 'createTime'])
     const toUserID = onlineUsers.get(to_uid)
     if (toUserID) {
-      io.sockets.to(toUserID).emit('message', {
-        ...data._doc,
-        userinfo: userinfo.find((item) => item._id.toHexString() === from_uid)
-      })
+      io.sockets.to(toUserID).emit('message', data)
     }
     return res.json({
       status: 200,
-      data: {
-        ...data._doc,
-        userinfo: userinfo.find((item) => item._id.toHexString() === to_uid)
-      },
+      data,
       message: ''
     })
   } catch (ex) {
@@ -161,37 +150,7 @@ export const messageHistory = async (req, res, next) => {
         $gt: time
       }
     }).sort({ createTime: -1 })
-    if (data.length === 0) {
-      return res.json({ status: 200, data, message: '' })
-    }
-    let map = new Map()
-    const users = []
-    for (let index = 0; index < data.length; index++) {
-      const item = data[index]
-      const key = item.from_uid === uid ? item.to_uid : item.from_uid
-      let temp = map.get(key)
-      if (temp) {
-        map.set(key, [...temp, item])
-      } else {
-        users.push(key)
-        map.set(key, [item])
-      }
-    }
-    const userData = await User.find({
-      _id: {
-        $in: users
-      }
-    }).select(['email', 'username', 'email', '_id', 'avatar', 'createTime'])
-    const userMap = new Map()
-    for (let index = 0; index < userData.length; index++) {
-      userMap.set(userData[index]._id.toHexString(), userData[index]._doc)
-    }
-    const tranfData = data.map((item) => {
-      const key = item.from_uid === uid ? item.to_uid : item.from_uid
-      const userinfo = userMap.get(key)
-      return { ...item._doc, userinfo }
-    })
-    return res.json({ status: 200, data: tranfData, message: '' })
+    return res.json({ status: 200, data, message: '' })
   } catch (ex) {
     next(ex)
   }
@@ -223,12 +182,14 @@ export const messageRead = async (req, res, next) => {
 export const userDetail = async (req, res, next) => {
   try {
     const { uid } = req.params
-    const userData = await User.find({
-      _id: uid
+    const data = await User.find({
+      _id: {
+        $in: uid.split(',')
+      }
     }).select(['email', 'username', 'email', '_id', 'avatar', 'createTime'])
     return res.json({
       status: 200,
-      data: userData[0],
+      data,
       message: ''
     })
   } catch (ex) {

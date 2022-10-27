@@ -1,6 +1,5 @@
 import { Schema, model } from 'mongoose'
 import bcrypt from 'bcrypt'
-
 const userSchema = new Schema({
   username: {
     type: String,
@@ -28,8 +27,9 @@ const userSchema = new Schema({
     default: ''
   },
   createTime: {
-    type: Date,
-    default: Date.now
+    type: Number,
+    default: Math.round(new Date() / 1000),
+    set: (val) => Math.round(new Date() / 1000)
   }
 })
 

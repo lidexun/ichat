@@ -12,8 +12,9 @@ const messageSchema = new Schema({
   content_type: { type: String, default: 1 },
   content: { type: String, default: '' },
   createTime: {
-    type: Date,
-    default: Date.now
+    type: Number,
+    default: Math.round(new Date() / 1000),
+    set: (val) => Math.round(new Date() / 1000)
   },
   is_read: { type: String, default: 0 }
 })
