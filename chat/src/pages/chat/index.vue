@@ -167,8 +167,10 @@ emitter.on('chat_message' + route.query._id, (data) => {
   t()
 })
 const t = debounce(function () {
-  setReadMessage(route.query._id)
-}, 2000)
+  setReadMessage(route.query._id).then(() => {
+    handleMessageRead(route.query._id)
+  })
+}, 1000)
 async function handleMessageRead(key, index) {
   const data = await readAllMsgIndexDB('messageStore', 'chatKey', key)
   const temp = data.filter((item) => item.is_read === 0)
@@ -226,8 +228,8 @@ onMounted(() => {
                   ? userInfo.username
                   : taUserInfo.username
               "
-              :width="'38px'"
-              :height="'38px'"
+              :width="'0.38rem'"
+              :height="'0.38rem'"
               :name="
                 item.from_uid === userInfo._id
                   ? userInfo.username

@@ -22,12 +22,15 @@ let state = reactive({
   list: null
 })
 onMounted(() => {
-  init()
+  setTimeout(() => {
+    init()
+  }, 100)
 })
 watch(state, (newvalue, oldvalue) => {
   setMessageCount()
 })
 const init = async () => {
+  // 如果本地db有数据库
   const latestMsg = await readAllIndexDB('latestMsgFetched', '')
   if (latestMsg.length !== 0) {
     for (let index = 0; index < latestMsg.length; index++) {
@@ -123,7 +126,14 @@ emitter.on('send_message', (data) => {
 })
 // 接收后更新列表
 emitter.on('message', (data) => {
-  handleNewMessage([data])
+  handleNewMessage([data]).then(() => {
+    if (router.currentRoute.value.name === 'chat') {
+      const index = state.list.findIndex(
+        (item) => item.userInfo._id === data.from_uid
+      )
+      state.list[index].count = 0
+    }
+  })
 })
 </script>
 <template>

@@ -49,17 +49,17 @@ function init() {
 // }
 // 断开ws
 emitter.on('login_out', (data) => {
+  closeIndexDB()
   socket.close()
   socket = null
-  closeIndexDB()
 })
 </script>
 
 <template>
   <router-view v-slot="{ Component, route }">
-    <keep-alive>
-      <component :is="Component" v-if="route.meta.keepAlive" />
+    <keep-alive :include="['index-message', 'index-user']">
+      <component :is="Component" />
     </keep-alive>
-    <component :is="Component" v-if="!route.meta.keepAlive" />
+    <!-- <component :is="Component" v-if="!route.meta.keepAlive" /> -->
   </router-view>
 </template>

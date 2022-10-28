@@ -17,11 +17,11 @@ const props = defineProps({
   },
   height: {
     type: String,
-    default: '45px'
+    default: '0.45rem'
   },
   width: {
     type: String,
-    default: '45px'
+    default: '0.45rem'
   }
 })
 let svg = createAvatar(style, {

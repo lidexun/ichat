@@ -76,7 +76,7 @@ export function readIndexDB(key, data = 1, index = '') {
 
 export function readAllIndexDB(name) {
   var list = []
-  var store = db.transaction([name], 'readwrite').objectStore(name)
+  var store = db.transaction(name, 'readwrite').objectStore(name)
   return new Promise((resolve, reject) => {
     store.openCursor().onsuccess = function (event) {
       var { result } = event.target
@@ -148,6 +148,7 @@ export function readAllMsgIndexDB(storeName, indexName = '', indexValue = '') {
   })
 }
 
-export function closeIndexDB(key) {
-  db.close()
+export async function closeIndexDB(key) {
+  await db.close()
+  db = null
 }
