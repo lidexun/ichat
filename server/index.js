@@ -1,17 +1,12 @@
-import * as dotenv from 'dotenv'
 import express from 'express'
 import cors from 'cors'
 import morganBody from 'morgan-body'
 import mongoose from 'mongoose'
 import router from './router/index.js'
 import ws from './utils/socket.js'
+import { PORT, JWT_SECRET, MONGODB_URL } from './config/index.js'
 import { expressjwt } from 'express-jwt'
 const app = express({})
-dotenv.config()
-dotenv.config({
-  path: `.env.${process.env.NODE_ENV}`
-})
-
 // middleware
 if (process.env.NODE_ENV === 'development') {
   morganBody(app)
@@ -25,7 +20,7 @@ app.use(express.json())
 app.use(cors())
 app.use(
   expressjwt({
-    secret: process.env.JWT_SECRET,
+    secret: JWT_SECRET,
     algorithms: ['HS256'],
     credentialsRequired: true,
     getToken: function fromHeaderOrQuerystring(req) {
@@ -58,7 +53,7 @@ app.use(router)
 // middleware end
 const initMongoose = () => {
   mongoose.connect(
-    process.env.MONGODB_URL,
+    MONGODB_URL,
     { useNewUrlParser: true, useUnifiedTopology: true },
     (err) => {
       if (err) {
@@ -73,7 +68,7 @@ const initMongoose = () => {
   )
 }
 initMongoose()
-const server = app.listen(process.env.PORT, () => {
-  console.log(`Server Stared on Port http://localhost:${process.env.PORT}`)
+const server = app.listen(PORT, () => {
+  console.log(`Server Stared on Port http://localhost:${PORT}`)
 })
 ws(server)
