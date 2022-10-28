@@ -55,16 +55,24 @@ app.use((err, req, res, next) => {
   next()
 })
 app.use(router)
-
 // middleware end
-mongoose.connect(
-  process.env.MONGODB_LOCAL,
-  { useNewUrlParser: true, useUnifiedTopology: true },
-  (err) => {
-    if (err) return console.log(err)
-    console.log('数据库成功连接')
-  }
-)
+const initMongoose = () => {
+  mongoose.connect(
+    process.env.MONGODB_URL,
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    (err) => {
+      if (err) {
+        setTimeout(() => {
+          initMongoose()
+        }, 1000)
+        console.log(err)
+        return
+      }
+      console.log('数据库成功连接')
+    }
+  )
+}
+initMongoose()
 const server = app.listen(process.env.PORT, () => {
   console.log(`Server Stared on Port http://localhost:${process.env.PORT}`)
 })
