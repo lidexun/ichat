@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose'
-import bcrypt from 'bcrypt'
+import bcryptjs from 'bcryptjs'
 const userSchema = new Schema({
   username: {
     type: String,
@@ -16,7 +16,7 @@ const userSchema = new Schema({
     type: String,
     required: true,
     min: 8,
-    set: (val) => bcrypt.hashSync(val, 10)
+    set: (val) => bcryptjs.hashSync(val, 10)
   },
   isAvatarSet: {
     type: Boolean,

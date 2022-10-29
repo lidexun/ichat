@@ -1,6 +1,6 @@
 import User from '../models/user.js'
 import Message from '../models/message.js'
-import bcrypt from 'bcrypt'
+import bcryptjs from 'bcryptjs'
 import { generateToken, verifyToken } from '../utils/token.js'
 // 登陆
 export const login = async (req, res, next) => {
@@ -27,7 +27,7 @@ export const login = async (req, res, next) => {
         message: '请正确的用户名'
       })
     }
-    const isPasswordValid = bcrypt.compareSync(password, userData.password)
+    const isPasswordValid = bcryptjs.compareSync(password, userData.password)
     if (!isPasswordValid) {
       return res.json({ message: '用户名或密码不正确', status: false })
     }
