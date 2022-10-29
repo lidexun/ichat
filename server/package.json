@@ -22,7 +22,6 @@
     "nodemon": "^2.0.19",
     "socket.io": "^4.5.1"
   },
-  "type": "module",
   "devDependencies": {
     "cross-env": "^7.0.3"
   }

@@ -1,9 +1,9 @@
-import User from '../models/user.js'
-import Message from '../models/message.js'
-import bcryptjs from 'bcryptjs'
-import { generateToken, verifyToken } from '../utils/token.js'
+const User = require('../models/user.js')
+const Message = require('../models/message.js')
+const bcryptjs = require('bcryptjs')
+const { generateToken, verifyToken } = require('../utils/token.js')
 // 登陆
-export const login = async (req, res, next) => {
+module.exports.login = async (req, res, next) => {
   try {
     const { username, password } = req.body
     if (!username || !password) {
@@ -47,7 +47,7 @@ export const login = async (req, res, next) => {
   }
 }
 // 注册
-export const register = async (req, res, next) => {
+module.exports.register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body
     if (!username || !password) {
@@ -91,7 +91,7 @@ export const register = async (req, res, next) => {
     next(ex)
   }
 }
-export const search = async (req, res, next) => {
+module.exports.search = async (req, res, next) => {
   try {
     const { username } = req.query
     const list = await User.find({ username: { $regex: username } }).select([
@@ -109,7 +109,7 @@ export const search = async (req, res, next) => {
     next(ex)
   }
 }
-export const message = async (req, res, next) => {
+module.exports.message = async (req, res, next) => {
   try {
     const { from_uid, to_uid, content_type, content } = req.body
     const data = await Message.create({
@@ -133,7 +133,7 @@ export const message = async (req, res, next) => {
   }
 }
 
-export const messageHistory = async (req, res, next) => {
+module.exports.messageHistory = async (req, res, next) => {
   try {
     const { uid } = await verifyToken(req.headers.token)
     const { time } = req.query
@@ -155,7 +155,7 @@ export const messageHistory = async (req, res, next) => {
     next(ex)
   }
 }
-export const messageRead = async (req, res, next) => {
+module.exports.messageRead = async (req, res, next) => {
   try {
     const { from_uid } = req.params
     const { uid } = await verifyToken(req.headers.token)
@@ -179,7 +179,7 @@ export const messageRead = async (req, res, next) => {
     next(ex)
   }
 }
-export const userDetail = async (req, res, next) => {
+module.exports.userDetail = async (req, res, next) => {
   try {
     const { uid } = req.params
     const data = await User.find({

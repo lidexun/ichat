@@ -1,5 +1,5 @@
-import { Schema, model } from 'mongoose'
-import bcryptjs from 'bcryptjs'
+const { Schema, model } = require('mongoose')
+const bcryptjs = require('bcryptjs')
 const userSchema = new Schema({
   username: {
     type: String,
@@ -33,4 +33,4 @@ const userSchema = new Schema({
   }
 })
 
-export default model('Users', userSchema)
+module.exports = model('Users', userSchema)

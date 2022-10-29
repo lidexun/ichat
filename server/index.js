@@ -1,12 +1,13 @@
-import express from 'express'
-import cors from 'cors'
-import morganBody from 'morgan-body'
-import mongoose from 'mongoose'
-import router from './router/index.js'
-import ws from './utils/socket.js'
-import { PORT, JWT_SECRET, MONGODB_URL } from './config/index.js'
-import { expressjwt } from 'express-jwt'
+const express = require('express')
+const cors = require('cors')
+const morganBody = require('morgan-body')
+const mongoose = require('mongoose')
+const router = require('./router/index.js')
+const ws = require('./utils/socket.js')
+const { PORT, JWT_SECRET, MONGODB_URL } = require('./config/index.js')
+const { expressjwt } = require('express-jwt')
 const app = express({})
+
 // middleware
 if (process.env.NODE_ENV === 'development') {
   morganBody(app)

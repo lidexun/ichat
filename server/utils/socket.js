@@ -1,4 +1,4 @@
-import { Server } from 'socket.io'
+const { Server } = require('socket.io')
 function ws(httpServer) {
   global.io = new Server(httpServer, {
     cors: {
@@ -25,4 +25,4 @@ function ws(httpServer) {
   })
 }
 
-export default ws
+module.exports = ws

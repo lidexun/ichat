@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+const { Schema, model } = require('mongoose')
 const messageSchema = new Schema({
   // userID: { type: Schema.Types.ObjectId, ref: 'User' },
   from_uid: {
@@ -19,4 +19,4 @@ const messageSchema = new Schema({
   is_read: { type: String, default: 0 }
 })
 
-export default model('message', messageSchema)
+module.exports = model('message', messageSchema)
