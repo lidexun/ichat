@@ -1,17 +1,22 @@
 const express = require('express')
 const cors = require('cors')
-const morganBody = require('morgan-body')
 const mongoose = require('mongoose')
 const router = require('./router/index.js')
-const ws = require('./utils/socket.js')
-const { PORT, JWT_SECRET, MONGODB_URL } = require('./config/index.js')
 const { expressjwt } = require('express-jwt')
-const app = express({})
+const { PORT, JWT_SECRET, MONGODB_URL } = require('./config/index.js')
+const app = express()
+const server = require('http').createServer(app)
+global.io = require('socket.io')(server, {
+  cors: {
+    credentials: true
+  }
+})
+global.onlineUsers = new Map()
+io.on('connection', (socket) => {
+  console.log(socket)
+  onlineUsers.set(socket.handshake.auth.id, socket.id)
+})
 
-// middleware
-if (process.env.NODE_ENV === 'development') {
-  morganBody(app)
-}
 app.use(
   express.urlencoded({
     extended: false
@@ -69,7 +74,7 @@ const initMongoose = () => {
   )
 }
 initMongoose()
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server Stared on Port http://localhost:${PORT}`)
 })
-ws(server)
+// ws(server)
