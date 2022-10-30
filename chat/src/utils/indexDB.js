@@ -48,10 +48,10 @@ export async function addIndexDB(key, data) {
     .objectStore(key)
     .add(data)
   request.onsuccess = function (event) {
-    console.log('数据写入成功')
+    console.log(key, '数据写入成功')
   }
   request.onerror = function (event) {
-    console.log('数据写入失败')
+    console.log(key, '数据写入失败')
   }
 }
 export function readIndexDB(key, data = 1, index = '') {
@@ -68,15 +68,15 @@ export function readIndexDB(key, data = 1, index = '') {
         resolve(request.result)
       } else {
         resolve(null)
-        console.log('未获得数据记录')
+        console.log(key, '未获得数据记录')
       }
     }
   })
 }
 
-export function readAllIndexDB(name) {
+export function readAllIndexDB(key) {
   var list = []
-  var store = db.transaction(name, 'readwrite').objectStore(name)
+  var store = db.transaction(key, 'readwrite').objectStore(key)
   return new Promise((resolve, reject) => {
     store.openCursor().onsuccess = function (event) {
       var { result } = event.target
@@ -121,11 +121,11 @@ export async function updateIndexDB(key, data) {
     .put(data)
 
   request.onsuccess = function (event) {
-    console.log('数据更新成功')
+    console.log(key, '数据更新成功')
   }
 
   request.onerror = function (event) {
-    console.log('数据更新失败')
+    console.log(key, '数据更新失败')
   }
 }
 

@@ -16,29 +16,23 @@ if (userInfo && socket === null) {
 function init() {
   userInfo = storage.getItem('userInfo')
   initIndexDB('im_' + userInfo._id).then(() => {
-    socket = io(import.meta.env.VITE_WS_URL, {
-      auth: {
-        username: userInfo.username,
-        id: userInfo._id,
-        token: userInfo.token
+    socket = new WebSocket(import.meta.env.VITE_WS_URL + '/ws/user', [
+      userInfo._id
+    ])
+    socket.onopen = function (e) {
+      console.log(e)
+    }
+    socket.onmessage = (e) => {
+      const { type, data } = JSON.parse(e.data)
+      switch (type) {
+        case 'message':
+          emitter.emit('message', data)
+          emitter.emit('chat_message' + data.from_uid, data)
+          break
+        default:
+          break
       }
-    })
-    socket.on('message', (data) => {
-      emitter.emit('message', data)
-      emitter.emit('chat_message' + data.from_uid, data)
-    })
-    // socket.on('ping', () => {
-    //   console.log(1)
-    // })
-    // socket.on('connect', function () {
-    //   console.log('客户端和服务端建立连接了')
-    //   ping()
-    // })
-
-    // socket.on('disconnect', function () {
-    //   console.log('客户端和服务端断开连接了')
-    //   clearInterval(interval)
-    // })
+    }
   })
 }
 // function ping() {
