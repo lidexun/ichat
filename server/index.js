@@ -4,19 +4,24 @@ const mongoose = require('mongoose')
 const router = require('./router/index.js')
 const { expressjwt } = require('express-jwt')
 const { PORT, JWT_SECRET, MONGODB_URL } = require('./config/index.js')
+const { verifyToken } = require('./utils/token.js')
 const app = express()
-const server = require('http').createServer(app)
-global.io = require('socket.io')(server, {
-  cors: {
-    credentials: true
-  }
-})
+const expressWs = require('express-ws')(app)
 global.onlineUsers = new Map()
-io.on('connection', (socket) => {
-  console.log(socket)
-  onlineUsers.set(socket.handshake.auth.id, socket.id)
+app.ws('/ws/user', (ws, req) => {
+  global.aWss = expressWs.getWss('/ws/user')
+  let uid = req.headers['sec-websocket-protocol']
+  if (!uid) {
+    ws.send('无效连接')
+    return
+  }
+  global.onlineUsers.set(uid, 1)
+  ws.send(
+    JSON.stringify({
+      message: '成功连接'
+    })
+  )
 })
-
 app.use(
   express.urlencoded({
     extended: false
@@ -35,7 +40,7 @@ app.use(
       return null
     }
   }).unless({
-    path: ['/login', '/register'] //不需要校验的路径
+    path: ['/login', '/register', '/ws/user', '/socket.io/'] //不需要校验的路径
   })
 )
 app.use((err, req, res, next) => {
@@ -74,7 +79,6 @@ const initMongoose = () => {
   )
 }
 initMongoose()
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server Stared on Port http://localhost:${PORT}`)
 })
-// ws(server)

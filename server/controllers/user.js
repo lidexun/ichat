@@ -119,9 +119,17 @@ module.exports.message = async (req, res, next) => {
       content,
       is_read: 0
     })
-    const toUserID = onlineUsers.get(to_uid)
-    if (toUserID) {
-      io.sockets.to(toUserID).emit('message', data)
+    if (onlineUsers.get(to_uid)) {
+      global.aWss.clients.forEach((item) => {
+        if (item._protocol === to_uid) {
+          item.send(
+            JSON.stringify({
+              type: 'message',
+              data
+            })
+          )
+        }
+      })
     }
     return res.json({
       status: 200,
