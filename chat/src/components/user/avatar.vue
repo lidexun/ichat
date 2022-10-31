@@ -26,7 +26,9 @@ const props = defineProps({
 })
 let svg = createAvatar(style, {
   seed: props.name,
-  dataUri: true
+  dataUri: true,
+  fontSize: 36,
+  backgroundColorLevel: 300
   // ... and other options
 })
 // `https://avatars.dicebear.com/api/initials/:${props.name}.svg`

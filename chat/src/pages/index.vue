@@ -15,9 +15,15 @@ const count = computed(() => store.getCount)
 const list = reactive([
   {
     name: 'message',
-    icon: 'comment-o',
+    icon: 'chat-o',
     text: '聊天',
     badge: count
+  },
+  {
+    name: 'nearby',
+    icon: 'guide-o',
+    text: '附近',
+    badge: null
   },
   {
     name: 'user',
