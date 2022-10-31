@@ -59,7 +59,7 @@ async function handleNewMessage(data = [], keyVal) {
   let p = []
   data.forEach((item) => {
     const key = item.from_uid === uid ? item.to_uid : item.from_uid
-    if (!uids.includes(key)) {
+    if (!uids.includes(key) && !p.includes(key)) {
       p.push(key)
     }
   })

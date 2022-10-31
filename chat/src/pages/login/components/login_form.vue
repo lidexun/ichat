@@ -21,7 +21,7 @@ function onSubmit(val) {
   })
 }
 function validator(val) {
-  const reg = /^\d{6,20}$/
+  const reg = /^[a-zA-Z0-9_-]{6,16}$/
   return reg.test(val)
 }
 

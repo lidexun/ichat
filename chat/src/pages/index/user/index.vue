@@ -41,7 +41,7 @@ function loginOut() {
       </div>
     </div>
     <van-cell-group>
-      <van-cell title="个人信息" is-link />
+      <!-- <van-cell title="个人信息" is-link /> -->
       <van-cell title="分享应用" is-link @click="share" />
     </van-cell-group>
     <div class="out">
@@ -79,6 +79,7 @@ function loginOut() {
     width: 100%;
     height: 100%;
     background: rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: saturate(90%) blur(10px);
     backdrop-filter: saturate(90%) blur(10px);
   }
   .user_info_box {

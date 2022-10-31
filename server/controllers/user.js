@@ -79,6 +79,13 @@ module.exports.register = async (req, res, next) => {
       email,
       createTime: new Date()
     })
+    // await Message.create({
+    //   from_uid: '63602a1a0c8e83ea1f54c8e3',
+    //   to_uid: user._id.toHexString(),
+    //   content_type: 1,
+    //   content: `hi ${user.username} 欢迎注册ichat`,
+    //   is_read: 0
+    // })
     const token = generateToken(user._id.toHexString())
     const data = {
       token,
