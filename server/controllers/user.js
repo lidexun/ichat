@@ -81,7 +81,10 @@ module.exports.register = async (req, res, next) => {
     })
     // 注册后自动发送消息
     await Message.create({
-      from_uid: '6360fc09ed7c6645579946ab',
+      from_uid:
+        process.env.NODE_ENV === 'production'
+          ? '6360fc09ed7c6645579946ab'
+          : '63602a1a0c8e83ea1f54c8e3',
       to_uid: user._id.toHexString(),
       content_type: 1,
       content: `hi ${user.username} 欢迎注册ichat`,
