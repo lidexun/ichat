@@ -22,7 +22,12 @@ app.ws('/ws/user', (ws, req) => {
     })
   )
 })
-app.use(cors())
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === 'production' ? 'http://lidexun.gitee.io' : '*'
+  })
+)
 app.use(
   express.urlencoded({
     extended: false
