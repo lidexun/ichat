@@ -16,6 +16,9 @@ router.beforeEach((to, from, next) => {
     next('/login')
     return
   }
+  if (from.path === '/login' && to.path === '/message') {
+    to.meta.keepAlive = false
+  }
   next()
 })
 export default router

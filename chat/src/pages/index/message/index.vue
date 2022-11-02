@@ -1,3 +1,10 @@
+<route>
+{
+  meta: {
+    keepAlive: true
+  }
+}
+</route>
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { getMessage, setReadMessage, getTaUserInfo } from '@/api/user.js'
@@ -25,6 +32,21 @@ onMounted(() => {
   setTimeout(() => {
     init()
   }, 100)
+  // 发送成功后更新列表
+  emitter.on('send_message', (data) => {
+    handleNewMessage([data])
+  })
+  // 接收后更新列表
+  emitter.on('message', (data) => {
+    handleNewMessage([data]).then(() => {
+      if (router.currentRoute.value.name === 'chat') {
+        const index = state.list.findIndex(
+          (item) => item.userInfo._id === data.from_uid
+        )
+        state.list[index].count = 0
+      }
+    })
+  })
 })
 watch(state, (newvalue, oldvalue) => {
   setMessageCount()
@@ -119,22 +141,6 @@ function setMessageCount() {
   })
   store.setCount(count)
 }
-
-// 发送成功后更新列表
-emitter.on('send_message', (data) => {
-  handleNewMessage([data])
-})
-// 接收后更新列表
-emitter.on('message', (data) => {
-  handleNewMessage([data]).then(() => {
-    if (router.currentRoute.value.name === 'chat') {
-      const index = state.list.findIndex(
-        (item) => item.userInfo._id === data.from_uid
-      )
-      state.list[index].count = 0
-    }
-  })
-})
 </script>
 <template>
   <van-nav-bar title="聊天" :right-text="'查找用户'" fixed>
@@ -162,7 +168,7 @@ emitter.on('message', (data) => {
         <div class="message_item_box van-hairline--bottom">
           <div class="name" v-text="item.userInfo.username"></div>
           <div class="content">
-            {{ item.latestData.content }}
+            {{ item.latestData.contentCopy }}
           </div>
           <div class="addtime" v-html="item.latestData.addtime"></div>
           <van-badge

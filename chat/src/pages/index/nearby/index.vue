@@ -1,3 +1,10 @@
+<route>
+{
+  meta: {
+    keepAlive: true
+  }
+}
+</route>
 <script setup>
 import close_white_png from '@/assets/close_white.png'
 import close_png from '@/assets/close.png'
@@ -21,7 +28,7 @@ for (let index = 0; index < 20; index++) {
   const n = Math.floor(Math.random() * (tu.length - 1))
   let data = {
     image: tu[n],
-    title: '你好,测试数据无反应',
+    title: '你好,测试数据模仿探探左右滑动',
     desc: n + 500 + 'm ' + '30分钟前活跃',
     tags: ['射手座']
     // image: tu[index],

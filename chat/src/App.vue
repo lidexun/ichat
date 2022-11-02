@@ -36,7 +36,7 @@ function init() {
       switch (type) {
         case 'message':
           emitter.emit('message', data)
-          emitter.emit('chat_message' + data.from_uid, data)
+          emitter.emit('chat_message', data)
           break
         default:
           break
@@ -47,10 +47,18 @@ function init() {
 </script>
 
 <template>
-  <router-view v-slot="{ Component, route }">
-    <keep-alive :include="['index-home', 'index-message', 'index-user']">
-      <component :is="Component" />
+  <router-view v-slot="{ Component }">
+    <keep-alive>
+      <component
+        :is="Component"
+        :key="$route.name"
+        v-if="$route.meta.keepAlive"
+      />
     </keep-alive>
-    <!-- <component :is="Component" v-if="!route.meta.keepAlive" /> -->
+    <component
+      :is="Component"
+      :key="$route.name"
+      v-if="!$route.meta.keepAlive"
+    />
   </router-view>
 </template>

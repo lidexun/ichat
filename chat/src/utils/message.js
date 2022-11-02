@@ -28,11 +28,11 @@ export function timestamp(t) {
 }
 export function transferData(data) {
   const tempData = data
-  tempData.contentCopy = data.content
-  tempData.content = tempData.content
+  tempData.contentCopy = tempData.content
     .replace(/&amp;/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/<br\/>/g, ' ')
+  tempData.contentHTML = tempData.content
   tempData.addtime = dateFormat(data.createTime)
   tempData.timestamp = data.createTime
   return tempData

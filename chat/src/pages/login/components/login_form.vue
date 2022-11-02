@@ -44,7 +44,7 @@ function validatoPassword(val) {
         <van-cell-group inset>
           <van-field
             v-if="type === 'register'"
-            style="font-size: 16px"
+            class="field"
             type="email"
             size="large"
             v-model="form.email"
@@ -61,7 +61,7 @@ function validatoPassword(val) {
             ]"
           />
           <van-field
-            style="font-size: 16px"
+            class="field"
             size="large"
             v-model="form.username"
             name=""
@@ -77,7 +77,7 @@ function validatoPassword(val) {
             ]"
           />
           <van-field
-            style="font-size: 16px"
+            class="field"
             size="large"
             v-model="form.password"
             type="password"
@@ -138,5 +138,8 @@ function validatoPassword(val) {
   .login_button {
     font-size: 16px;
   }
+}
+.field {
+  font-size: 18px;
 }
 </style>

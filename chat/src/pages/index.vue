@@ -1,10 +1,6 @@
 <route>
 {
   redirect: "message",
-  meta: {
-    keepAlive: true
-  }
-  
 }
 </route>
 <script setup>

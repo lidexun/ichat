@@ -88,7 +88,6 @@ function sendContent() {
     .replace(/↵/g, '<br/>')
     .replace(/\n/g, '<br/>')
     .replace(/\s/g, '&nbsp;')
-
   const params = {
     content_type: 1,
     content: contentT,
@@ -144,8 +143,11 @@ function inputFocus() {
     isIos ? 0 : 350
   )
 }
-// 接收
-emitter.on('chat_message' + route.query._id, (data) => {
+
+const messageCallback = (data) => {
+  if (!route.query._id || route.query._id !== data.from_uid) {
+    return
+  }
   chat.list.push(transferData(data))
   nextTick(() => {
     const el = document.documentElement
@@ -165,7 +167,7 @@ emitter.on('chat_message' + route.query._id, (data) => {
     }
   })
   t()
-})
+}
 const t = debounce(function () {
   setReadMessage(route.query._id).then(() => {
     handleMessageRead(route.query._id)
@@ -173,21 +175,30 @@ const t = debounce(function () {
 }, 1000)
 async function handleMessageRead(key, index) {
   const data = await readAllMsgIndexDB('messageStore', 'chatKey', key)
-  const temp = data.filter((item) => item.is_read === 0)
-  temp.forEach((item) => {
-    if (item.is_read === 0) {
-      item.is_read = '1'
-      updateIndexDB('messageStore', item)
+  if (data.length > 0) {
+    const temp = data.filter((item) => item.is_read === 0)
+    temp.forEach((item) => {
+      if (item.is_read === 0) {
+        item.is_read = '1'
+        updateIndexDB('messageStore', item)
+      }
+    })
+    const obj = await readIndexDB(['latestMsgFetched'], key)
+    if (obj === 'null') {
+      updateIndexDB('latestMsgFetched', {
+        ...obj,
+        count: 0
+      })
     }
-  })
-  const obj = await readIndexDB(['latestMsgFetched'], key)
-  updateIndexDB('latestMsgFetched', {
-    ...obj,
-    count: 0
-  })
+  }
 }
+onBeforeUnmount(() => {
+  emitter.off('chat_message', messageCallback)
+})
 onMounted(() => {
   init()
+  // 接收
+  emitter.on('chat_message', messageCallback)
   setReadMessage(route.query._id).then(() => {
     handleMessageRead(route.query._id)
   })
@@ -246,7 +257,7 @@ onMounted(() => {
                   color="#1989fa"
                 />
               </template>
-              <div class="content" v-html="item.contentCopy"></div>
+              <div class="content" v-html="item.contentHTML"></div>
             </div>
           </li>
           <li
