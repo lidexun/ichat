@@ -183,8 +183,8 @@ async function handleMessageRead(key, index) {
         updateIndexDB('messageStore', item)
       }
     })
-    const obj = await readIndexDB(['latestMsgFetched'], key)
-    if (obj === 'null') {
+    const obj = await readIndexDB('latestMsgFetched', key)
+    if (obj !== 'null') {
       updateIndexDB('latestMsgFetched', {
         ...obj,
         count: 0
