@@ -26,4 +26,4 @@
 
 # 预览图
 
-![image](https://imgbed.link/file/5943)
+![image](https://github.com/lidexun/image/blob/master/ichat_view.png)
