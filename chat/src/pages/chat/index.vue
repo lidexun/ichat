@@ -1,4 +1,5 @@
 <script setup>
+import emoji from '@/components/emoji/index.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { sendMessage, getTaUserInfo, setReadMessage } from '../../api/user.js'
 import { transferData, dateFormat, timestamp } from '@/utils/message.js'
@@ -12,7 +13,7 @@ import {
   updateIndexDB,
   readAllMsgIndexDB
 } from '@/utils/indexDB.js'
-
+const emojiState = ref(false)
 const router = useRouter()
 const route = useRoute()
 const userInfo = storage.getItem('userInfo')
@@ -128,6 +129,7 @@ function hideKeyboard() {
   document.activeElement.blur()
 }
 function inputFocus() {
+  emojiState.value = false
   const isIos = !!navigator.userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
   // android键盘弹起需要时间
   setTimeout(
@@ -203,6 +205,10 @@ onMounted(() => {
     handleMessageRead(route.query._id)
   })
 })
+function emojiChange(data) {
+  content.value += data.data
+  content_input.value.textContent += data.data
+}
 </script>
 <template>
   <div class="chat">
@@ -275,32 +281,35 @@ onMounted(() => {
       </ul>
     </van-pull-refresh>
     <footer class="footer">
-      <!-- <div class="emoji">
-        <van-icon name="smile-o" size="30" />
-      </div> -->
-      <div class="content">
-        <div
-          ref="content_input"
-          class="input"
-          contenteditable
-          style="-webkit-user-select: auto"
-          placeholder="请输入文字"
-          @input="contentInput"
-          @focus="inputFocus()"
-          autocapitalize="off"
-          safe-area-inset-bottom
-        ></div>
+      <div class="footer_box">
+        <div class="emoji" @click="emojiState = !emojiState">
+          <van-icon name="smile-o" size="30" />
+        </div>
+        <div class="content">
+          <div
+            ref="content_input"
+            class="input"
+            contenteditable
+            style="-webkit-user-select: auto"
+            placeholder="请输入文字"
+            @input="contentInput"
+            @focus="inputFocus()"
+            autocapitalize="off"
+            safe-area-inset-bottom
+          ></div>
+        </div>
+        <div class="footer_button">
+          <van-button
+            :disabled="content.length <= 0"
+            class="button"
+            size="large"
+            type="primary"
+            @click="sendContent"
+            >发送</van-button
+          >
+        </div>
       </div>
-      <div class="footer_button">
-        <van-button
-          :disabled="content.length <= 0"
-          class="button"
-          size="large"
-          type="primary"
-          @click="sendContent"
-          >发送</van-button
-        >
-      </div>
+      <emoji v-show="emojiState" @change="emojiChange"></emoji>
     </footer>
   </div>
 </template>
@@ -310,15 +319,19 @@ onMounted(() => {
   background-color: #ededed;
 }
 .footer {
-  flex-flow: column;
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
+  flex-direction: column;
   background-color: var(--van-white);
   position: fixed;
   position: -webkit-sticky;
   position: sticky;
   bottom: 0;
+  .footer_box {
+    display: flex;
+    flex-flow: column;
+    flex-direction: row;
+    align-items: flex-end;
+  }
   .emoji {
     width: 48px;
     height: 48px;
