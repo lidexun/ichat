@@ -10,17 +10,30 @@ const expressWs = require('express-ws')(app)
 global.onlineUsers = new Map()
 app.ws('/ws/user', (ws, req) => {
   global.aWss = expressWs.getWss('/ws/user')
-  let uid = req.headers['sec-websocket-protocol']
+  const { uid } = verifyToken(req.headers['sec-websocket-protocol'])
+  ws.uid = uid
   if (!uid) {
-    ws.send('无效连接')
+    ws.send(
+      JSON.stringify({
+        type: 'noauth',
+        message: '连接失败,请重试'
+      })
+    )
     return
   }
-  global.onlineUsers.set(uid, 1)
+  global.onlineUsers.set(uid, Math.round(new Date() / 1000))
   ws.send(
     JSON.stringify({
-      message: '成功连接'
+      type: 'auth is ok',
+      message: '连接成功'
     })
   )
+  ws.on('message', (wsc, msg) => {
+    const { type, message } = JSON.parse(wsc)
+    if (type === 'heartbeat') {
+      global.onlineUsers.set(uid, Math.round(new Date() / 1000))
+    }
+  })
 })
 app.use(
   cors({

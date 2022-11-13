@@ -132,7 +132,7 @@ module.exports.message = async (req, res, next) => {
     })
     if (onlineUsers.get(to_uid)) {
       global.aWss.clients.forEach((item) => {
-        if (item._protocol === to_uid) {
+        if (item.uid === to_uid) {
           item.send(
             JSON.stringify({
               type: 'message',
