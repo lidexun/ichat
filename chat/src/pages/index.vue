@@ -4,9 +4,9 @@
 }
 </route>
 <script setup>
-import { useMessageStore } from '@/store/index.js'
+import { useMainStore } from '@/store/index.js'
 const active = ref('message')
-const store = useMessageStore()
+const store = useMainStore()
 const count = computed(() => store.getCount)
 const list = reactive([
   {

@@ -63,11 +63,11 @@ const chatMoveData = async () => {
       }
       return transferData(item)
     })
-
-  if (chat.list.length < limit) {
+  if (chat.list.length >= messageList.length) {
     chat.listEnding = true
   }
   chat.list = chat.list.concat(list, tempTimes)
+  chat.isLoading = false
   page++
 }
 function chatScrollTop(top = 999999) {
@@ -83,7 +83,9 @@ function contentInput(e) {
   }
 }
 function sendContent() {
-  content_input.value.focus()
+  if (!emojiState.value) {
+    content_input.value.focus()
+  }
   if (!content.value) return
   let contentT = content_input.value.innerText
     .replace(/↵/g, '<br/>')
@@ -117,15 +119,16 @@ function sendContent() {
 }
 
 const pulldownRefresh = async () => {
+  const h = document.body.offsetHeight
   await chatMoveData()
   if (page !== 1) {
-    const h = document.body.offsetHeight
     nextTick(() => {
       document.documentElement.scrollTop = document.body.offsetHeight - h
     })
   }
 }
 function hideKeyboard() {
+  emojiState.value = false
   document.activeElement.blur()
 }
 function inputFocus() {
@@ -205,6 +208,17 @@ onMounted(() => {
     handleMessageRead(route.query._id)
   })
 })
+function clickEmoji() {
+  emojiState.value = !emojiState.value
+  nextTick(() => {
+    const el = document.documentElement
+    el.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+      inline: 'nearest'
+    })
+  })
+}
 function emojiChange(data) {
   content.value += data.data
   content_input.value.textContent += data.data
@@ -282,7 +296,7 @@ function emojiChange(data) {
     </van-pull-refresh>
     <footer class="footer">
       <div class="footer_box">
-        <div class="emoji" @click="emojiState = !emojiState">
+        <div class="emoji" @click="clickEmoji">
           <van-icon name="smile-o" size="30" />
         </div>
         <div class="content">

@@ -11,7 +11,7 @@ import { getMessage, setReadMessage, getTaUserInfo } from '@/api/user.js'
 import { openUserChat } from '@/utils/user.js'
 import { transferData } from '@/utils/message.js'
 import storage from '@/utils/storage.js'
-import { useMessageStore } from '@/store/index.js'
+import { useMainStore } from '@/store/index.js'
 import {
   addIndexDB,
   readIndexDB,
@@ -24,7 +24,7 @@ const router = useRouter()
 const userInfo = storage.getItem('userInfo')
 const uid = userInfo._id
 let messageList = new Map()
-const store = useMessageStore()
+const store = useMainStore()
 let state = reactive({
   list: null
 })

@@ -1,11 +1,9 @@
 <script setup>
 import { login, register } from '@/api/user.js'
-import { useUserInfoStore } from '@/store/index.js'
+import { useMainStore } from '@/store/index.js'
 import loginForm from './components/login_form.vue'
 import router from '@/router/index.js'
 import storage from '@/utils/storage.js'
-import emitter from '@/utils/bus.js'
-
 import { Toast } from 'vant'
 const type = ref('login')
 const setType = (value) => {
@@ -21,17 +19,11 @@ const submit = async (data) => {
     forbidClick: true
   })
   try {
-    let res = null
-    if (data.type === 'register') {
-      res = await register(data)
-    } else {
-      res = await login(data)
-    }
-    const store = useUserInfoStore()
+    let res = await (data.type === 'register' ? register(data) : login(data))
+    const store = useMainStore()
     store.setUserInfo(res.data)
     storage.setItem('userInfo', res.data)
-    emitter.emit('login')
-    router.push('/')
+    router.push('/message')
     Toast.clear()
   } catch {}
 }
@@ -47,7 +39,7 @@ const submit = async (data) => {
     :border="false"
   />
   <div class="login_logo">
-    <van-image class="logo" width="58" height="58" src="icon.svg" />
+    <van-image class="logo" src="icon.svg" />
     <div>iChat 一款聊天应用</div>
   </div>
   <loginForm
@@ -72,6 +64,8 @@ const submit = async (data) => {
   flex-direction: column;
   align-items: center;
   .logo {
+    width: 58px;
+    height: 58px;
     border-radius: 10px;
   }
 }

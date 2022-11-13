@@ -10,10 +10,9 @@ import close_white_png from '@/assets/close_white.png'
 import close_png from '@/assets/close.png'
 import like_white_png from '@/assets/like_white.png'
 import like_png from '@/assets/like.png'
-import { useUserInfoStore } from '@/store/index.js'
-
-const store = useUserInfoStore()
-const userInfo = store.getUserInfo
+import { useMainStore } from '@/store/index.js'
+const store = useMainStore()
+const userInfo = store.userInfo
 const arr = []
 /* 测试数据*/
 const tu = [

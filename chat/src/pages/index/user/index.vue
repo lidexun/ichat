@@ -1,10 +1,9 @@
 <script setup>
 import storage from '@/utils/storage.js'
 import router from '@/router'
-import emitter from '@/utils/bus.js'
-import { useUserInfoStore } from '@/store/index.js'
-const store = useUserInfoStore()
-const userInfo = storage.getItem('userInfo')
+import { useMainStore } from '@/store/index.js'
+const store = useMainStore()
+const userInfo = store.userInfo
 function share() {
   if (window.navigator.share) {
     const shareOpts = {
@@ -16,9 +15,8 @@ function share() {
   }
 }
 function loginOut() {
-  store.setUserInfo(undefined)
   storage.clearAll()
-  emitter.emit('login_out')
+  store.loginOut()
   router.push('/login')
 }
 </script>

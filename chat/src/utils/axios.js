@@ -95,7 +95,8 @@ instance.interceptors.response.use(
   },
   // 请求失败
   (error) => {
-    const { response } = error
+    const { response, message } = error
+    tip(message)
     if (response) {
       // 请求已发出，但是不在2xx的范围
       errorHandle(response.status, response.data.message)
