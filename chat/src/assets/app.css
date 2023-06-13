@@ -5,6 +5,11 @@ html {
   font-size: -webkit-calc(100vw / 7.5 * 2);
   font-size: calc(100vw / 7.5 * 2);
 }
+@media screen and (min-width: 562.5px) {
+  html {
+    font-size: 150px;
+  }
+}
 
 body {
   margin: 0;

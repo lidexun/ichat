@@ -13,7 +13,8 @@ const config = {
       plugins: [
         postCssPxToRem({
           rootValue: 100, // 1rem的大小
-          propList: ['*'] // 需要转换的属性，这里选择全部都进行转换
+          propList: ['*'], // 需要转换的属性，这里选择全部都进行转换
+          selectorBlackList: [/^html$/]
         })
       ]
     }
@@ -23,7 +24,7 @@ const config = {
     Components({
       resolvers: [VantResolver()]
     }),
-    AutoImport({
+    AutoImport({        
       dts: true,
       imports: ['vue', 'vue-router', 'pinia']
     }),

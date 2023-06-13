@@ -23,7 +23,7 @@ const submit = async (data) => {
     const store = useMainStore()
     store.setUserInfo(res.data)
     storage.setItem('userInfo', res.data)
-    router.push('/message')
+    router.push('/main')
     Toast.clear()
   } catch {}
 }

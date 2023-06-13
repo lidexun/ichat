@@ -297,7 +297,7 @@ function emojiChange(data) {
     <footer class="footer">
       <div class="footer_box">
         <div class="emoji" @click="clickEmoji">
-          <van-icon name="smile-o" size="30" />
+          <van-icon name="smile-o" />
         </div>
         <div class="content">
           <div
@@ -347,8 +347,9 @@ function emojiChange(data) {
     align-items: flex-end;
   }
   .emoji {
-    width: 48px;
-    height: 48px;
+    font-size: 30px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -429,6 +430,7 @@ function emojiChange(data) {
       justify-content: flex-start;
       flex-direction: row-reverse;
       .chat_list_content {
+        min-height: 40px;
         margin-left: 0;
         margin-right: 12px;
         background-color: var(--van-blue);
